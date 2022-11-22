@@ -23,9 +23,10 @@ colours = {
 
 screen_x = 1000
 screen_y = 900
-player_default_width = 200
+player_default_width = 150
 player_short = 100
-player_long = 300
+player_long = 225
+all_widths = [player_short,player_default_width,player_long]
 player_init_x = (screen_x-player_default_width)/2
 player_init_y = screen_y - 150
 ball_init_x = 600
@@ -308,13 +309,15 @@ class powerup():
 
                 # powerups changing paddle properties
                 if self.power_type == 'paddle_size_up':
-                    new_x = p_x_store - 50 if p_w_store != player_long else p_x_store
-                    new_width = p_w_store + 100 if p_w_store != player_long else p_w_store
+                    width_delta = abs(p_w_store - all_widths[all_widths.index(player.width) + 1]) if p_w_store != player_long else 0
+                    new_x = p_x_store - width_delta/2 #if p_w_store != player_long else p_x_store
+                    new_width = p_w_store + width_delta #if p_w_store != player_long else p_w_store
                     player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=player.lives)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'paddle_size_down':
-                    new_x = p_x_store + 50 if p_w_store != player_short else p_x_store
-                    new_width = p_w_store - 100 if p_w_store != player_short else p_w_store
+                    width_delta = abs(p_w_store - all_widths[all_widths.index(player.width) - 1]) if p_w_store != player_short else 0
+                    new_x = p_x_store + width_delta/2 #if p_w_store != player_short else p_x_store
+                    new_width = p_w_store - width_delta #if p_w_store != player_short else p_w_store
                     player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=player.lives)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'paddle_speed':
@@ -400,10 +403,10 @@ def generate_brick_coords(level):
                 brick_coords.append((x, y, x + brick_width, y + brick_height)) # left, top, right, bottom
     return brick_coords, brick_width, brick_height
 
-def draw_start_text(start_or_continue):
-    text1_pos = (screen_x/2 - 115, screen_y/2 - 100)
+def draw_start_text(start_or_retry):
+    text_pos = (screen_x/2 - 110, screen_y/2 - 100)
     font = pg.font.SysFont('Arial', 30)
-    screen.blit(font.render(f'Press Space to {start_or_continue}', True, colours['RED']), text1_pos)
+    screen.blit(font.render(f'Press Space to {start_or_retry}', True, colours['RED']), text_pos)
     return
 
 def draw_game_over_screen():
@@ -466,7 +469,7 @@ while True:
         level = 0
         game_over = False
         begin = False
-        start_or_continue = 'start'
+        start_or_retry = 'start'
 
         use_toshiba = False
         group = pg.sprite.RenderPlain()
@@ -485,6 +488,7 @@ while True:
     
     elif not initialise_everything:
         if game_over:
+            pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start+2)),width=5)
             draw_game_over_screen()
 
         elif not game_over:
@@ -515,7 +519,7 @@ while True:
                 width_memory = player.width
                 new_x = (screen_x - width_memory)/2
                 player = paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[], lives=player.lives)
-                draw_start_text(start_or_continue)
+                draw_start_text(start_or_retry)
                 for event in pg.event.get():
                     if event.type == KEYDOWN and event.key == K_SPACE:
                         begin = True
@@ -541,6 +545,7 @@ while True:
                     if dead == "dead":
                         all_balls.pop(all_balls.index(ball_obj))
                     if len(all_balls) == 0:
+                        pg.mixer.Sound.play(pg.mixer.Sound("assets/lose_life.wav"))
                         if 'ball_speed' in player.powerups:
                             player.powerups = [i for i in player.powerups if i != 'ball_speed'] # revert ball speed back to default when losing a life
                         if 'ball_pass_through' in player.powerups:
@@ -549,10 +554,10 @@ while True:
                             player.powerups = [i for i in player.powerups if i != 'ball_pass_through'] # get rid of multi ball
                         player.lives -= 1
                         begin = False
-                        start_or_continue = 'continue'
+                        start_or_retry = 'retry'
                         if player.lives == 0:
                             game_over = True
-                            start_or_continue = 'start'
+                            start_or_retry = 'start'
                         else:
                             revive_ball = True
 
@@ -564,10 +569,8 @@ while True:
         if player.width != width_memory or player.powerups != powerups_memory or player.lives != lives_memory:
             draw_info_bar(player.lives,player.powerups,player.width)
             pg.display.update()
-            print(1)
         else:
             pg.display.update((0,0,screen_x,info_bar_start))
-            print(2)
 
         powerups_memory = player.powerups
         width_memory = player.width
