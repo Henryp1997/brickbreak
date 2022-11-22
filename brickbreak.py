@@ -47,11 +47,12 @@ screen = pg.display.set_mode((screen_x,screen_y))
 pg.display.set_caption("Brickbreaker")
 
 class paddle(pg.sprite.Sprite):
-    def __init__(self,x,y,width,powerups):
+    def __init__(self,x,y,width,powerups,lives):
         pg.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
         self.width = width
+        self.lives = lives
         if 'paddle_speed' in powerups:
             self.speed = 18
         else:
@@ -295,31 +296,31 @@ class powerup():
             if (self.x + self.width) >= player.x and self.x <= (player.x + player.width):
 
                 # old parameter values
-                player_x_old = player.x
-                player_y_old = player.y
-                player_width_old = player.width
+                p_x_store = player.x
+                p_y_store = player.y
+                p_w_store = player.width
 
-                ball_x_old = [i.x for i in old_balls_list]
-                ball_y_old = [i.y for i in old_balls_list]
-                ball_velocity_old = [i.velocity for i in old_balls_list]
-                ball_passthrough_old = [i.passthrough for i in old_balls_list]
-                ball_velocity_mag_old = [(i[0]**2 + i[1]**2) for i in ball_velocity_old]
+                b_x_store = [i.x for i in old_balls_list]
+                b_y_store = [i.y for i in old_balls_list]
+                b_v_store = [i.velocity for i in old_balls_list]
+                b_pass_store = [i.passthrough for i in old_balls_list]
+                b_v_mag_store = [(i[0]**2 + i[1]**2) for i in b_v_store]
 
                 # powerups changing paddle properties
                 if self.power_type == 'paddle_size_up':
-                    new_x = player_x_old - 50 if player_width_old != player_long else player_x_old
-                    new_width = player_width_old + 100 if player_width_old != player_long else player_width_old
-                    player = paddle(x=new_x, y=player_y_old, width=new_width, powerups=player.powerups)
+                    new_x = p_x_store - 50 if p_w_store != player_long else p_x_store
+                    new_width = p_w_store + 100 if p_w_store != player_long else p_w_store
+                    player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=player.lives)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'paddle_size_down':
-                    new_x = player_x_old + 50 if player_width_old != player_short else player_x_old
-                    new_width = player_width_old - 100 if player_width_old != player_short else player_width_old
-                    player = paddle(x=new_x, y=player_y_old, width=new_width,powerups=player.powerups)
+                    new_x = p_x_store + 50 if p_w_store != player_short else p_x_store
+                    new_width = p_w_store - 100 if p_w_store != player_short else p_w_store
+                    player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=player.lives)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'paddle_speed':
                     powerups = [i for i in player.powerups if i != "paddle_speed"]
                     powerups.append("paddle_speed")
-                    player = paddle(x=player_x_old, y=player_y_old, width=player_width_old, powerups=powerups)
+                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=player.lives)
                     new_balls_list = old_balls_list
 
                 # powerups changing ball properties
@@ -327,8 +328,8 @@ class powerup():
                 elif self.power_type == 'ball_speed':
                     for k, ball_obj in enumerate(old_balls_list):
                         # 242 comes from the sum of 11**2 and 11**2 --> increasing speed from initial (8,8) to (11,11)
-                        new_velocity = (math.sqrt(242/128)*ball_velocity_old[k][0], math.sqrt(242/128)*ball_velocity_old[k][1]) if abs(ball_velocity_mag_old[k] - 128) < 1 else ball_velocity_old[k]
-                        ball_obj = ball(x=ball_x_old[k], y=ball_x_old[k], velocity=new_velocity, passthrough=ball_passthrough_old[k])
+                        new_velocity = (math.sqrt(242/128)*b_v_store[k][0], math.sqrt(242/128)*b_v_store[k][1]) if abs(b_v_mag_store[k] - 128) < 1 else b_v_store[k]
+                        ball_obj = ball(x=b_x_store[k], y=b_y_store[k], velocity=new_velocity, passthrough=b_pass_store[k])
                         new_balls_list.append(ball_obj)
                     powerups = [i for i in player.powerups if i != "ball_speed"]
                     powerups.append("ball_speed")
@@ -336,7 +337,7 @@ class powerup():
 
                 elif self.power_type == 'ball_pass_through':
                     for k, ball_obj in enumerate(old_balls_list):
-                        ball_obj = ball(x=ball_x_old[k], y=ball_x_old[k], velocity=ball_velocity_old[k], passthrough=True)            
+                        ball_obj = ball(x=b_x_store[k], y=b_y_store[k], velocity=b_v_store[k], passthrough=True)            
                         new_balls_list.append(ball_obj)
                     powerups = [i for i in player.powerups if i != "ball_pass_through"]
                     powerups.append("ball_pass_through")
@@ -345,31 +346,24 @@ class powerup():
                 elif self.power_type == 'multi':
 
                     for k, ball_obj in enumerate(old_balls_list):
-                        # split one ball into three
-                        # x_memory = ball_obj.x
-                        # y_memory = ball_obj.y
-                        # velocity_memory = ball_obj.velocity
-                        # passthrough_memory = ball_obj.passthrough
-
-                        ball_velocity_mag_old = math.sqrt(ball_velocity_mag_old[k])
-
-                        velocity_mag_memory = math.sqrt(ball_velocity_old[k][0]**2 + ball_velocity_old[k][1]**2)
-                        vx_dir, vy_dir = ball_velocity_old[k][0]/abs(ball_velocity_old[k][0]), ball_velocity_old[k][1]/abs(ball_velocity_old[k][1])
-                        angle = np.arccos(ball_velocity_old[k][0]/velocity_mag_memory)
+                        b_v_mag_store = math.sqrt(b_v_mag_store[k])
+                        velocity_mag_memory = math.sqrt(b_v_store[k][0]**2 + b_v_store[k][1]**2)
+                        vx_dir, vy_dir = b_v_store[k][0]/abs(b_v_store[k][0]), b_v_store[k][1]/abs(b_v_store[k][1])
+                        angle = np.arccos(b_v_store[k][0]/velocity_mag_memory)
                         new_balls_list.append(ball_obj)
 
                         for angle in [angle - np.pi/6, angle + np.pi/3]:
                             angle1 = angle - np.pi/6
-                            vx, vy = abs(ball_velocity_mag_old*(np.cos(angle1)))*vx_dir, abs(ball_velocity_mag_old*(np.sin(angle1)))*vy_dir
+                            vx, vy = abs(b_v_mag_store*(np.cos(angle1)))*vx_dir, abs(b_v_mag_store*(np.sin(angle1)))*vy_dir
                             if abs(vx) < 1:
                                 vx = vx/abs(vx) # set the velocity component to 1 if it's less than 1
-                                vy = (vy/abs(vy)) * (math.sqrt(ball_velocity_mag_old**2 - 1))
+                                vy = (vy/abs(vy)) * (math.sqrt(b_v_mag_store**2 - 1))
 
                             elif abs(vy) < 1:
                                 vy = vy/abs(vy) # set the velocity component to 1 if it's less than 1
-                                vx = (vx/abs(vx)) * (math.sqrt(ball_velocity_mag_old**2 - 0))
+                                vx = (vx/abs(vx)) * (math.sqrt(b_v_mag_store**2 - 0))
           
-                            ball_obj1 = ball(x=ball_x_old[k], y=ball_y_old[k], velocity=(vx,vy), passthrough=ball_passthrough_old[k])
+                            ball_obj1 = ball(x=b_x_store[k], y=b_y_store[k], velocity=(vx,vy), passthrough=b_pass_store[k])
                             new_balls_list.append(ball_obj1)
                     
                     powerups = [i for i in player.powerups if i != "multi"]
@@ -421,7 +415,7 @@ def draw_game_over_screen():
     return
 
 def draw_info_bar(lives,player_powerups,player_width):
-    pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,info_bar_start),(screen_x,screen_y)),width=5)
+    pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,info_bar_start),(screen_x,screen_y - info_bar_start)),width=5)
     font = pg.font.SysFont('Arial', 30)
     screen.blit(font.render(f'Lives:', True, colours['RED']), (20, info_bar_start + 20))
     font = pg.font.SysFont('Arial', 25)
@@ -459,14 +453,17 @@ while True:
         all_bricks = []
         all_powerups = []
 
-        player = paddle(x=player_init_x, y=player_init_y, width=player_default_width, powerups=[])
+        player = paddle(x=player_init_x, y=player_init_y, width=player_default_width, powerups=[], lives=3)
         ball_obj = ball(x=ball_init_x,y=ball_init_y,velocity=ball_init_velocity,passthrough=False)
+
+        powerups_memory = player.powerups
+        width_memory = player.width
+        lives_memory = player.lives
 
         revive_ball = False
         restart = False
         generate_level = True
         level = 0
-        lives = 3
         game_over = False
         begin = False
         start_or_continue = 'start'
@@ -474,6 +471,10 @@ while True:
         use_toshiba = False
         group = pg.sprite.RenderPlain()
         group.add(player)
+
+        draw_info_bar(player.lives,player.powerups,player.width)
+
+        pg.display.update()
 
         initialise_everything = False
 
@@ -488,8 +489,7 @@ while True:
 
         elif not game_over:
 
-            pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,screen_y)),width=5)
-            draw_info_bar(lives,player.powerups,player.width)
+            pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start+2)),width=5)
 
             if generate_level:
                 brick_coords, brick_width, brick_height = generate_brick_coords(level)
@@ -514,7 +514,7 @@ while True:
                 all_powerups = []
                 width_memory = player.width
                 new_x = (screen_x - width_memory)/2
-                player = paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[])
+                player = paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[], lives=player.lives)
                 draw_start_text(start_or_continue)
                 for event in pg.event.get():
                     if event.type == KEYDOWN and event.key == K_SPACE:
@@ -547,10 +547,10 @@ while True:
                             player.powerups = [i for i in player.powerups if i != 'ball_pass_through'] # revert ball 'unstoppable' state back to default
                         if 'multi' in player.powerups:
                             player.powerups = [i for i in player.powerups if i != 'ball_pass_through'] # get rid of multi ball
-                        lives -= 1
+                        player.lives -= 1
                         begin = False
                         start_or_continue = 'continue'
-                        if lives == 0:
+                        if player.lives == 0:
                             game_over = True
                             start_or_continue = 'start'
                         else:
@@ -560,7 +560,19 @@ while True:
                     if power_up.is_alive:
                         power_up.update_position()
                         player, all_balls = power_up.check_collisions(player,all_balls)
-                
+
+        if player.width != width_memory or player.powerups != powerups_memory or player.lives != lives_memory:
+            draw_info_bar(player.lives,player.powerups,player.width)
+            pg.display.update()
+            print(1)
+        else:
+            pg.display.update((0,0,screen_x,info_bar_start))
+            print(2)
+
+        powerups_memory = player.powerups
+        width_memory = player.width
+        lives_memory = player.lives
+
         for event in pg.event.get():
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 restart = True
@@ -569,5 +581,3 @@ while True:
             if event.type == QUIT:
                 pg.quit()
                 sys.exit()
-    
-    pg.display.update()
