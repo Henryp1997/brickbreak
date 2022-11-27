@@ -14,16 +14,17 @@ colours = {
     'YELLOW': (255, 255, 0),
     'GREEN': (0, 220, 40),
     'BLACK': (15, 15, 15),
-    'WHITE': (255, 255, 255),
+    'WHITE': '#ffffff',
     'GREY1': '#d1d1d1',
     'GREY2': '#a1a1a1',
     'PINK': '#fc03f8',
     'PURPLE': '#7734eb',
-    'ORANGE': '#f5a742'
+    'ORANGE': '#f5a742',
+    'ELEC_BLUE': '#59CBE8'
 }
 
 screen_x = 1000
-screen_y = 900
+screen_y = screen_x*(9/10)
 player_default_width = 150
 player_short = 100
 player_long = 225
@@ -32,9 +33,10 @@ player_init_x = (screen_x-player_default_width)/2
 player_init_y = screen_y - 150
 ball_init_x = 700
 ball_init_y = screen_y - 600
+ball_init_height = 10
 ball_init_velocity = (-8,8)
 laser_bolt_init_width = 5
-laser_bolt_init_height = 15
+laser_bolt_init_height = 25
 
 info_bar_start = player_init_y + 40
 all_powerup_types = {
@@ -90,7 +92,7 @@ class paddle(pg.sprite.Sprite):
                 if abs(frame_count - max(frames)) > 40:
                     generate_bolt = True
             if key[pg.K_UP] and generate_bolt:
-                pg.mixer.Sound.play(pg.mixer.Sound('assets/laser.wav'))
+                pg.mixer.Sound.play(pg.mixer.Sound('assets/laser_shot.wav'))
                 laser_x = self.x + (self.width - laser_bolt_init_width)/2
                 laser_y = self.y - laser_bolt_init_height
                 laser_bolt = laser(laser_x, laser_y)
@@ -124,9 +126,10 @@ class ball():
             col = colours['PINK']
         else:
             col = colours['GREEN']
-        if self.y + self.height > player_init_y + 30:
+        if self.y + self.height > player_init_y + 30: # don't draw if in the info bar section of the screen
             return
-        pg.draw.rect(screen, col, pg.Rect((self.x, self.y), (self.height,self.height)))
+        ball_centre = (self.x + 0.5*self.height, self.y + 0.5*self.height)
+        pg.draw.circle(screen, col, ball_centre, radius=0.5*self.height)
         return
         
     def check_collision(self,player,all_bricks,max_brick_y):
@@ -139,7 +142,7 @@ class ball():
             # calculate what the angle of reflection should be when hitting the paddle
             # this should vary from 90 deg if the ball hits the centre to almost zero if the ball hits the edges
             relative_x = self.x - player.x + self.height
-            if 0 <= relative_x <= player.width: # does it hit the paddle at this y coord
+            if -10 <= relative_x <= player.width + 10: # does it hit the paddle at this y coord
                 angle_min = 20
                 grad = 2*((90-angle_min)/player.width)
                 intercept = angle_min
@@ -278,7 +281,6 @@ class brick():
         generate_powerup = random.randint(0,2)
         if generate_powerup == 0:
             power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0,len(all_powerup_types.keys())-1)]][0]
-            power_type = 'laser'
             power_up = powerup(pos[0],pos[1],True,power_type)
             all_powerups.append(power_up)
         return
@@ -318,40 +320,46 @@ class powerup():
         new_balls_list = []
         if self.y > player_init_y - 20:
             if (self.x + self.width) >= player.x and self.x <= (player.x + player.width):
-
+                
                 # old parameter values
                 p_x_store = player.x
                 p_y_store = player.y
                 p_w_store = player.width
+                p_l_store = player.lives
 
                 b_x_store = [i.x for i in old_balls_list]
                 b_y_store = [i.y for i in old_balls_list]
                 b_v_store = [i.velocity for i in old_balls_list]
                 b_pass_store = [i.passthrough for i in old_balls_list]
-                b_v_mag_store = [(i[0]**2 + i[1]**2) for i in b_v_store]
+                b_v_mag_store = [math.sqrt(i[0]**2 + i[1]**2) for i in b_v_store]
 
                 # powerups changing paddle properties
                 if self.power_type == 'paddle_size_up':
                     width_delta = abs(p_w_store - all_widths[all_widths.index(player.width) + 1]) if p_w_store != player_long else 0
                     new_x = p_x_store - width_delta/2
                     new_width = p_w_store + width_delta
-                    player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=player.lives)
+                    player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=p_l_store)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'paddle_size_down':
                     width_delta = abs(p_w_store - all_widths[all_widths.index(player.width) - 1]) if p_w_store != player_short else 0
                     new_x = p_x_store + width_delta/2
                     new_width = p_w_store - width_delta
-                    player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=player.lives)
+                    player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=p_l_store)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'paddle_speed':
                     powerups = [i for i in player.powerups if i != "paddle_speed"]
                     powerups.append("paddle_speed")
-                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=player.lives)
+                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=p_l_store)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'laser':
                     powerups = [i for i in player.powerups if i != "laser"]
                     powerups.append("laser")
-                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=player.lives)
+                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=p_l_store)
+                    new_balls_list = old_balls_list
+                elif self.power_type == 'extra_life':
+                    powerups = [i for i in player.powerups if i != 'extra_life']
+                    powerups.append('extra_life')
+                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=p_l_store + 1)
                     new_balls_list = old_balls_list
 
                 # powerups changing ball properties
@@ -359,7 +367,7 @@ class powerup():
                 elif self.power_type == 'ball_speed':
                     for k, ball_obj in enumerate(old_balls_list):
                         # 242 comes from the sum of 11**2 and 11**2 --> increasing speed from initial (8,8) to (11,11)
-                        new_velocity = (math.sqrt(242/128)*b_v_store[k][0], math.sqrt(242/128)*b_v_store[k][1]) if abs(b_v_mag_store[k] - 128) < 1 else b_v_store[k]
+                        new_velocity = (math.sqrt(242/128)*b_v_store[k][0], math.sqrt(242/128)*b_v_store[k][1]) if abs(b_v_mag_store[k]**2 - 128) < 1 else b_v_store[k]
                         ball_obj = ball(x=b_x_store[k], y=b_y_store[k], velocity=new_velocity, passthrough=b_pass_store[k])
                         new_balls_list.append(ball_obj)
                     powerups = [i for i in player.powerups if i != "ball_speed"]
@@ -377,22 +385,20 @@ class powerup():
                 elif self.power_type == 'multi':
 
                     for k, ball_obj in enumerate(old_balls_list):
-                        b_v_mag_store = math.sqrt(b_v_mag_store[k])
-                        velocity_mag_memory = math.sqrt(b_v_store[k][0]**2 + b_v_store[k][1]**2)
                         vx_dir, vy_dir = b_v_store[k][0]/abs(b_v_store[k][0]), b_v_store[k][1]/abs(b_v_store[k][1])
-                        angle = np.arccos(b_v_store[k][0]/velocity_mag_memory)
+                        angle = np.arccos(b_v_store[k][0]/b_v_mag_store[k])
                         new_balls_list.append(ball_obj)
 
                         for angle in [angle - np.pi/6, angle + np.pi/3]:
                             angle1 = angle - np.pi/6
-                            vx, vy = abs(b_v_mag_store*(np.cos(angle1)))*vx_dir, abs(b_v_mag_store*(np.sin(angle1)))*vy_dir
+                            vx, vy = abs(b_v_mag_store[k]*(np.cos(angle1)))*vx_dir, abs(b_v_mag_store[k]*(np.sin(angle1)))*vy_dir
                             if abs(vx) < 1:
                                 vx = vx/abs(vx) # set the velocity component to 1 if it's less than 1
-                                vy = (vy/abs(vy)) * (math.sqrt(b_v_mag_store**2 - 1))
+                                vy = (vy/abs(vy)) * (math.sqrt(b_v_mag_store[k]**2 - 1))
 
                             elif abs(vy) < 1:
                                 vy = vy/abs(vy) # set the velocity component to 1 if it's less than 1
-                                vx = (vx/abs(vx)) * (math.sqrt(b_v_mag_store**2 - 0))
+                                vx = (vx/abs(vx)) * (math.sqrt(b_v_mag_store[k]**2 - 0))
           
                             ball_obj1 = ball(x=b_x_store[k], y=b_y_store[k], velocity=(vx,vy), passthrough=b_pass_store[k])
                             new_balls_list.append(ball_obj1)
@@ -423,7 +429,7 @@ class laser():
         self.height = laser_bolt_init_height
     
     def draw_laser(self):
-        pg.draw.rect(screen, colours['RED'], (self.x, self.y, self.width, self.height))
+        pg.draw.rect(screen, colours['ELEC_BLUE'], (self.x, self.y, self.width, self.height))
         return
 
     def move(self):
@@ -584,7 +590,7 @@ while True:
                 new_x = (screen_x - width_memory)/2
                 player = paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[], lives=player.lives)
                 draw_start_text(start_or_retry)
-                pg.draw.rect(screen, colours['GREEN'], pg.Rect((ball_init_x, ball_init_y), (10, 10)))
+                pg.draw.circle(screen, colours['GREEN'], (ball_init_x + 0.5*ball_init_height, ball_init_y + 0.5*ball_init_height), radius=0.5*ball_init_height)
                 for event in pg.event.get():
                     if event.type == KEYDOWN and event.key == K_SPACE:
                         begin = True
@@ -613,7 +619,6 @@ while True:
                     if dead == "dead":
                         all_balls.pop(all_balls.index(ball_obj))
                     if len(all_balls) == 0:
-                        pg.mixer.Sound.play(pg.mixer.Sound("assets/lose_life.wav"))
                         if 'ball_speed' in player.powerups:
                             player.powerups = [i for i in player.powerups if i != 'ball_speed'] # revert ball speed back to default when losing a life
                         if 'ball_pass_through' in player.powerups:
@@ -624,9 +629,11 @@ while True:
                         begin = False
                         start_or_retry = 'retry'
                         if player.lives == 0:
+                            pg.mixer.Sound.play(pg.mixer.Sound("assets/game_over.wav"))
                             game_over = True
                             start_or_retry = 'start'
                         else:
+                            pg.mixer.Sound.play(pg.mixer.Sound("assets/lose_life.wav"))
                             revive_ball = True
                 
                 # move laser bolts
@@ -639,6 +646,8 @@ while True:
                         if dead == "dead":
                             all_lasers.pop(i)
                         
+                if len(all_balls) == 1 and 'multi' in player.powerups:
+                    player.powerups = [i for i in player.powerups if i != 'multi']
 
                 for power_up in all_powerups:
                     if power_up.is_alive:
