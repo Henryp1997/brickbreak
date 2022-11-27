@@ -18,7 +18,8 @@ colours = {
     'GREY1': '#d1d1d1',
     'GREY2': '#a1a1a1',
     'PINK': '#fc03f8',
-    'PURPLE': '#7734eb'
+    'PURPLE': '#7734eb',
+    'ORANGE': '#f5a742'
 }
 
 screen_x = 1000
@@ -29,9 +30,12 @@ player_long = 225
 all_widths = [player_short,player_default_width,player_long]
 player_init_x = (screen_x-player_default_width)/2
 player_init_y = screen_y - 150
-ball_init_x = 600
-ball_init_y = screen_y - 500
+ball_init_x = 700
+ball_init_y = screen_y - 600
 ball_init_velocity = (-8,8)
+laser_bolt_init_width = 5
+laser_bolt_init_height = 15
+
 info_bar_start = player_init_y + 40
 all_powerup_types = {
     'Multi': ('multi',175),
@@ -67,7 +71,7 @@ class paddle(pg.sprite.Sprite):
         self.rect.center = (self.x+self.width/2,self.y+self.height/2)
         return
     
-    def check_keys(self):
+    def check_keys(self,all_lasers,frame_count):
         key = pg.key.get_pressed()
         if key[pg.K_LEFT]:
             if self.x + self.width/2 > 5:
@@ -77,6 +81,20 @@ class paddle(pg.sprite.Sprite):
             if self.x + self.width/2 < screen_x - 5:
                 self.x += self.speed
                 self.rect.move_ip(self.speed, 0)
+        if 'laser' in self.powerups:
+            generate_bolt = False
+            if len(all_lasers) == 0:
+                generate_bolt = True
+            else:
+                frames = [i[1] for i in all_lasers]
+                if abs(frame_count - max(frames)) > 40:
+                    generate_bolt = True
+            if key[pg.K_UP] and generate_bolt:
+                pg.mixer.Sound.play(pg.mixer.Sound('assets/laser.wav'))
+                laser_x = self.x + (self.width - laser_bolt_init_width)/2
+                laser_y = self.y - laser_bolt_init_height
+                laser_bolt = laser(laser_x, laser_y)
+                return laser_bolt
 
     def draw_paddle(self):
         pg.draw.rect(screen, colours['RED'], self.rect, width=4, border_top_left_radius=4, border_top_right_radius=4, border_bottom_left_radius=4, border_bottom_right_radius=4)
@@ -111,7 +129,7 @@ class ball():
         pg.draw.rect(screen, col, pg.Rect((self.x, self.y), (self.height,self.height)))
         return
         
-    def check_collision(self,player,all_bricks):
+    def check_collision(self,player,all_bricks,max_brick_y):
         ball_right = self.x + self.height
         ball_bottom = self.y + self.height
         ball_velocity_magnitude = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
@@ -142,55 +160,56 @@ class ball():
                         return
 
         # collision with brick
-        if ball_obj.passthrough:
-            negate_speed = 1
-        else:
-            negate_speed = -1
-        bricks_hit = 0
-        for i, brick_obj in enumerate(all_bricks):
-            if bricks_hit != 1:
-                brick_hit = False
-                l, r, t, b = (brick_obj.x, brick_obj.x + brick_width, brick_obj.y, brick_obj.y + brick_height) # left, right, top and bottom coords of the brick
-                # hit brick from left side
-                if abs(int(ball_right) - l) < 10:
-                    if t <= ball_bottom and self.y <= b:
-                        if self.velocity[0] > 0:
-                            pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
-                            self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
-                            bricks_hit = 1
-                            brick_hit = True
+        if not (self.y > max_brick_y + 20):
+            if ball_obj.passthrough:
+                negate_speed = 1
+            else:
+                negate_speed = -1
+            bricks_hit = 0
+            for i, brick_obj in enumerate(all_bricks):
+                if bricks_hit != 1:
+                    brick_hit = False
+                    l, r, t, b = (brick_obj.x, brick_obj.x + brick_width, brick_obj.y, brick_obj.y + brick_height) # left, right, top and bottom coords of the brick
+                    # hit brick from left side
+                    if abs(int(ball_right) - l) < 10:
+                        if t <= ball_bottom and self.y <= b:
+                            if self.velocity[0] > 0:
+                                pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
+                                self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
+                                bricks_hit = 1
+                                brick_hit = True
 
-                # hit brick from right side
-                elif abs(int(self.x) - r) < 10: 
-                    if t <= ball_bottom and self.y <= b:
-                        if self.velocity[0] < 0:
-                            pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
-                            self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
-                            bricks_hit = 1
-                            brick_hit = True
+                    # hit brick from right side
+                    elif abs(int(self.x) - r) < 10: 
+                        if t <= ball_bottom and self.y <= b:
+                            if self.velocity[0] < 0:
+                                pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
+                                self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
+                                bricks_hit = 1
+                                brick_hit = True
 
-                # hit brick from above
-                elif abs(int(ball_bottom) - t) < 10:
-                    if l <= ball_right and self.x <= r:
-                        if self.velocity[1] > 0:
-                            pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
-                            self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
-                            bricks_hit = 1
-                            brick_hit = True
+                    # hit brick from above
+                    elif abs(int(ball_bottom) - t) < 10:
+                        if l <= ball_right and self.x <= r:
+                            if self.velocity[1] > 0:
+                                pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
+                                self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
+                                bricks_hit = 1
+                                brick_hit = True
 
-                # hit brick from below
-                elif abs(int(self.y) - b) < 10:
-                    if l <= ball_right and self.x <= r:
-                        if self.velocity[1] < 0:
-                            pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
-                            self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
-                            bricks_hit = 1
-                            brick_hit = True
+                    # hit brick from below
+                    elif abs(int(self.y) - b) < 10:
+                        if l <= ball_right and self.x <= r:
+                            if self.velocity[1] < 0:
+                                pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
+                                self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
+                                bricks_hit = 1
+                                brick_hit = True
 
-                if brick_hit:
-                    brick_obj.is_alive = False
-                    brick_obj.generate_powerup()
-                    all_bricks.pop(i)
+                    if brick_hit:
+                        brick_obj.is_alive = False
+                        brick_obj.generate_powerup()
+                        all_bricks.pop(i)
 
         # collision with walls
         if self.y < 5:
@@ -201,15 +220,16 @@ class ball():
         if ball_bottom > player_init_y + 20:
             return "dead"
 
-        if self.x < 5:
-            if self.velocity[0] < 0: # prevents getting stuck out of bounds
-                pg.mixer.Sound.play(pg.mixer.Sound("assets/wall.wav"))
-                self.velocity = (-self.velocity[0], self.velocity[1])
-        
-        if ball_right > screen_x - 5:
-            if self.velocity[0] > 0: # prevents getting stuck out of bounds
-                pg.mixer.Sound.play(pg.mixer.Sound("assets/wall.wav"))
-                self.velocity = (-self.velocity[0], self.velocity[1])
+        if not 10 <= self.x <= screen_x - 10:
+            if self.x < 5:
+                if self.velocity[0] < 0: # prevents getting stuck out of bounds
+                    pg.mixer.Sound.play(pg.mixer.Sound("assets/wall.wav"))
+                    self.velocity = (-self.velocity[0], self.velocity[1])
+            
+            if ball_right > screen_x - 5:
+                if self.velocity[0] > 0: # prevents getting stuck out of bounds
+                    pg.mixer.Sound.play(pg.mixer.Sound("assets/wall.wav"))
+                    self.velocity = (-self.velocity[0], self.velocity[1])
 
         return
 
@@ -258,6 +278,7 @@ class brick():
         generate_powerup = random.randint(0,2)
         if generate_powerup == 0:
             power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0,len(all_powerup_types.keys())-1)]][0]
+            power_type = 'laser'
             power_up = powerup(pos[0],pos[1],True,power_type)
             all_powerups.append(power_up)
         return
@@ -287,6 +308,8 @@ class powerup():
             pg.draw.rect(screen, colours['GREY1'], (self.x, self.y, self.width, self.height))
         elif self.power_type == 'multi':
             pg.draw.rect(screen, colours['PURPLE'], (self.x, self.y, self.width, self.height))
+        elif self.power_type == 'laser':
+            pg.draw.rect(screen, colours['ORANGE'], (self.x, self.y, self.width, self.height))
         else:
             pg.draw.rect(screen, colours['RED'], (self.x, self.y, self.width, self.height))
         return
@@ -310,19 +333,24 @@ class powerup():
                 # powerups changing paddle properties
                 if self.power_type == 'paddle_size_up':
                     width_delta = abs(p_w_store - all_widths[all_widths.index(player.width) + 1]) if p_w_store != player_long else 0
-                    new_x = p_x_store - width_delta/2 #if p_w_store != player_long else p_x_store
-                    new_width = p_w_store + width_delta #if p_w_store != player_long else p_w_store
+                    new_x = p_x_store - width_delta/2
+                    new_width = p_w_store + width_delta
                     player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=player.lives)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'paddle_size_down':
                     width_delta = abs(p_w_store - all_widths[all_widths.index(player.width) - 1]) if p_w_store != player_short else 0
-                    new_x = p_x_store + width_delta/2 #if p_w_store != player_short else p_x_store
-                    new_width = p_w_store - width_delta #if p_w_store != player_short else p_w_store
+                    new_x = p_x_store + width_delta/2
+                    new_width = p_w_store - width_delta
                     player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=player.lives)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'paddle_speed':
                     powerups = [i for i in player.powerups if i != "paddle_speed"]
                     powerups.append("paddle_speed")
+                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=player.lives)
+                    new_balls_list = old_balls_list
+                elif self.power_type == 'laser':
+                    powerups = [i for i in player.powerups if i != "laser"]
+                    powerups.append("laser")
                     player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=player.lives)
                     new_balls_list = old_balls_list
 
@@ -386,6 +414,38 @@ class powerup():
 
         return player, new_balls_list
 
+class laser():
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.speed = -20
+        self.width = laser_bolt_init_width
+        self.height = laser_bolt_init_height
+    
+    def draw_laser(self):
+        pg.draw.rect(screen, colours['RED'], (self.x, self.y, self.width, self.height))
+        return
+
+    def move(self):
+        self.y += self.speed
+        return
+    
+    def check_collision(self,all_bricks,max_brick_y):
+        if self.y > max_brick_y + 20:
+            return
+        bricks_hit = 0
+        for i, brick_obj in enumerate(all_bricks):
+            if bricks_hit != 1:
+                l, r, b = (brick_obj.x, brick_obj.x + brick_width, brick_obj.y + brick_height) # left, right and bottom coords of the brick
+                if abs(self.y - b) < 10:
+                    if l <= self.x <= r:
+                        bricks_hit = 1
+                        brick_obj.is_alive = False
+                        brick_obj.generate_powerup()
+                        all_bricks.pop(i)        
+                        return "dead"
+
+
 def generate_brick_coords(level):
     if level == -1:
         brick_coords = []
@@ -401,7 +461,8 @@ def generate_brick_coords(level):
         for y in range(y_start,y_start + brick_height*(n_rows),brick_height):
             for x in range(120,screen_x-120,brick_width):
                 brick_coords.append((x, y, x + brick_width, y + brick_height)) # left, top, right, bottom
-    return brick_coords, brick_width, brick_height
+    max_brick_y = max([i[3] for i in brick_coords])
+    return brick_coords, brick_width, brick_height, max_brick_y
 
 def draw_start_text(start_or_retry):
     text_pos = (screen_x/2 - 110, screen_y/2 - 100)
@@ -445,14 +506,17 @@ def draw_info_bar(lives,player_powerups,player_width):
             screen.blit(font.render(j, True, col),(all_powerup_types[j][1], info_bar_start + 65))
 
 initialise_everything = True
+frame_count = 0
 # game code
 while True:
     clock = pg.time.Clock()
     clock.tick(60)
+    frame_count += 1
     screen.fill(colours['BLACK'])
 
     if initialise_everything:
         all_balls = [] # list because there is a powerup that adds more balls
+        all_lasers = []
         all_bricks = []
         all_powerups = []
 
@@ -496,7 +560,7 @@ while True:
             pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start+2)),width=5)
 
             if generate_level:
-                brick_coords, brick_width, brick_height = generate_brick_coords(level)
+                brick_coords, brick_width, brick_height, max_brick_y = generate_brick_coords(level)
                 [all_bricks.append(brick(coords[0],coords[1],width=brick_width,height=brick_height,is_alive=True)) for coords in brick_coords]
                 all_balls.append(ball_obj)
                 generate_level = False
@@ -520,6 +584,7 @@ while True:
                 new_x = (screen_x - width_memory)/2
                 player = paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[], lives=player.lives)
                 draw_start_text(start_or_retry)
+                pg.draw.rect(screen, colours['GREEN'], pg.Rect((ball_init_x, ball_init_y), (10, 10)))
                 for event in pg.event.get():
                     if event.type == KEYDOWN and event.key == K_SPACE:
                         begin = True
@@ -527,8 +592,6 @@ while True:
                         pg.quit()
                         sys.exit()
             elif begin:
-                # move paddle if key pressed
-                player.check_keys()
                 if revive_ball or restart:
                     ball_obj.x = ball_init_x
                     ball_obj.y = ball_init_y
@@ -538,10 +601,15 @@ while True:
                     revive_ball = False
                     restart = False
 
+                # move paddle and check for spacebar presses for laser bolts
+                laser_bolt = player.check_keys(all_lasers,frame_count)
+                if laser_bolt is not None:
+                    all_lasers.append((laser_bolt, frame_count))
+
                 # move ball
                 for ball_obj in all_balls:
                     ball_obj.move()
-                    dead = ball_obj.check_collision(player,all_bricks)
+                    dead = ball_obj.check_collision(player,all_bricks,max_brick_y)
                     if dead == "dead":
                         all_balls.pop(all_balls.index(ball_obj))
                     if len(all_balls) == 0:
@@ -560,6 +628,17 @@ while True:
                             start_or_retry = 'start'
                         else:
                             revive_ball = True
+                
+                # move laser bolts
+                if 'laser' in player.powerups:
+                    bolt_objects = [i[0] for i in all_lasers]
+                    for i, bolt in enumerate(bolt_objects):
+                        bolt.draw_laser()
+                        bolt.move()
+                        dead = bolt.check_collision(all_bricks,max_brick_y)
+                        if dead == "dead":
+                            all_lasers.pop(i)
+                        
 
                 for power_up in all_powerups:
                     if power_up.is_alive:
