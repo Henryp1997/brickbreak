@@ -1,0 +1,48 @@
+import pygame as pg
+
+colours = {
+    'BLUE': (0, 100, 200),
+    'DARK_BLUE': (0,55,255),
+    'RED' : (225, 25, 25),
+    'YELLOW': (255, 255, 0),
+    'GREEN': (0, 220, 40),
+    'BLACK': (15, 15, 15),
+    'WHITE': '#ffffff',
+    'GREY1': '#d1d1d1',
+    'GREY2': '#a1a1a1',
+    'PINK': '#fc03f8',
+    'PURPLE': '#7734eb',
+    'ORANGE': '#f5a742',
+    'ELEC_BLUE': '#59CBE8'
+}
+
+screen_x = 1000
+screen_y = screen_x*(9/10)
+player_default_width = 150
+player_short = 100
+player_long = 225
+all_widths = [player_short,player_default_width,player_long]
+player_init_x = (screen_x-player_default_width)/2
+player_init_y = screen_y - 150
+ball_init_x = 700
+ball_init_y = screen_y - 600
+ball_init_height = 10
+ball_init_velocity = (-8,8)
+laser_bolt_init_width = 5
+laser_bolt_init_height = 25
+brick_default_width = 70
+brick_default_height = 30
+
+info_bar_start = player_init_y + 40
+all_powerup_types = {
+    'Multi': ('multi',175),
+    'Fast ball': ('ball_speed',220),
+    'Unstoppable ball': ('ball_pass_through',288),
+    'Laser': ('laser',400),
+    'Fast paddle': ('paddle_speed',450),
+    'Large paddle': ('paddle_size_up',540),
+    'Small paddle': ('paddle_size_down',635),
+    'Extra Life': ('extra_life',None)
+}
+
+screen = pg.display.set_mode((screen_x,screen_y))
