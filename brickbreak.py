@@ -8,30 +8,30 @@ pg.init()
 pg.display.set_caption("Brickbreaker")
 
 def generate_brick_coords(level):
+    brick_default_width = 70
+    brick_default_height = 30
     if level == -1:
         brick_coords = []
         brick_coords.append((400,400,470,430))
     if level == 0:
         brick_coords = []
-        brick_default_width = 70
-        brick_default_height = 30
         y_start = 80
         n_rows = 3
         for y in range(y_start,y_start + brick_default_height*(n_rows),brick_default_height):
-            for x in range(120,screen_x-120,brick_default_width):
+            for x in range(round(0.12*screen_x),round(0.88*screen_x),brick_default_width):
                 brick_coords.append((x, y, x + brick_default_width, y + brick_default_height)) # left, top, right, bottom
     max_brick_y = max([i[3] for i in brick_coords])
     return brick_coords, brick_default_width, brick_default_height, max_brick_y
 
 def draw_start_text(start_or_retry):
-    text_pos = (screen_x/2 - 110, screen_y/2 - 100)
+    text_pos = (screen_x/2 - round(screen_x*0.11), screen_y/2 - (screen_y/9))
     font = pg.font.SysFont('Arial', 30)
     screen.blit(font.render(f'Press Space to {start_or_retry}', True, colours['RED']), text_pos)
     return
 
 def draw_game_over_screen():
-    text1_pos = (screen_x/2 - 100, screen_y/2 - 100)
-    text2_pos = (text1_pos[0] - 30, text1_pos[1] + 50)
+    text1_pos = (screen_x/2 - round(screen_x/10), screen_y/2 - round(screen_y*(10/9)))
+    text2_pos = (text1_pos[0] - round(screen_x*0.03), text1_pos[1] + round(screen_y*(5/90)))
     font = pg.font.SysFont('Arial', 30)
     screen.blit(font.render('GAME OVER', True, colours['RED']), text1_pos)
     screen.blit(font.render('Press Esc to restart', True, colours['RED']), text2_pos)
@@ -40,9 +40,9 @@ def draw_game_over_screen():
 def draw_info_bar(lives,player_powerups,player_width):
     pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,info_bar_start),(screen_x,screen_y - info_bar_start)),width=5)
     font = pg.font.SysFont('Arial', 30)
-    screen.blit(font.render(f'Lives:', True, colours['RED']), (20, info_bar_start + 20))
+    screen.blit(font.render(f'Lives:', True, colours['RED']), (round(screen_x*0.02), info_bar_start + round(screen_x*0.02)))
     font = pg.font.SysFont('Arial', 25)
-    screen.blit(font.render(f'{lives}', True, colours['GREY1']), (45, info_bar_start + 58))
+    screen.blit(font.render(f'{lives}', True, colours['GREY1']), (round(screen_x*(45/1000)), info_bar_start + round(screen_x*(58/1000))))
     font = pg.font.SysFont('Arial', 30)
     screen.blit(font.render(f'Active modifiers:', True, colours['RED']),(175, info_bar_start + 20))
 
@@ -66,6 +66,8 @@ def draw_info_bar(lives,player_powerups,player_width):
 
 initialise_everything = True
 frame_count = 0
+level_true = 0
+level = level_true - 1
 # game code
 while True:
     clock = pg.time.Clock()
@@ -74,7 +76,6 @@ while True:
     screen.fill(colours['BLACK'])
 
     if initialise_everything:
-        all_balls = [] # list because there is a powerup that adds more balls
         all_lasers = []
         all_bricks = []
         all_powerups = []
@@ -89,7 +90,6 @@ while True:
         revive_ball = False
         restart = False
         generate_level = True
-        level = 0
         game_over = False
         begin = False
         start_or_retry = 'start'
@@ -111,26 +111,29 @@ while True:
     
     elif not initialise_everything:
         if game_over:
-            pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start+2)),width=5)
+            pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start + round(screen_x*0.002))),width=5)
             draw_game_over_screen()
 
         elif not game_over:
 
-            pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start+2)),width=5)
+            pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start + round(screen_x*0.002))),width=5)
 
-            if generate_level:
-                brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
-                [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,is_alive=True)) for coords in brick_coords]
-                all_balls.append(ball_obj)
-                generate_level = False
-            
             if len(all_bricks) == 0:
                 level += 1
                 generate_level = True
+                begin = False
             else:
                 for brick_obj in all_bricks:
                     if brick_obj.is_alive:
                         brick_obj.draw_brick_sprite()
+            
+            if generate_level:
+                all_balls = []
+                brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
+                [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,is_alive=True)) for coords in brick_coords]
+                ball_obj = objects.ball(x=ball_init_x,y=ball_init_y,velocity=ball_init_velocity,passthrough=False)
+                all_balls.append(ball_obj)
+                generate_level = False
  
             if use_toshiba:
                 group.draw(screen)
@@ -160,14 +163,14 @@ while True:
                     all_balls.append(ball_obj)
                     revive_ball = False
                     restart = False
-
+                print(len(all_balls))
                 # move paddle and check for spacebar presses for laser bolts
                 laser_bolt = player.check_keys(all_lasers,frame_count)
                 if laser_bolt is not None:
                     all_lasers.append((laser_bolt, frame_count))
-
                 # move ball
                 for ball_obj in all_balls:
+                    ball_obj.draw_ball()
                     ball_obj.move()
                     dead = ball_obj.check_collision(player,all_bricks,all_powerups,max_brick_y)
                     if dead == "dead":
@@ -179,11 +182,11 @@ while True:
                         begin = False
                         start_or_retry = 'retry'
                         if player.lives == 0:
-                            pg.mixer.Sound.play(pg.mixer.Sound("assets/game_over.wav"))
+                            pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/game_over.wav"))
                             game_over = True
                             start_or_retry = 'start'
                         else:
-                            pg.mixer.Sound.play(pg.mixer.Sound("assets/lose_life.wav"))
+                            pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/lose_life.wav"))
                             revive_ball = True
                 
                 # move laser bolts

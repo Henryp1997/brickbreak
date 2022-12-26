@@ -1,4 +1,5 @@
 import pygame as pg
+import os
 
 colours = {
     'BLUE': (0, 100, 200),
@@ -16,16 +17,18 @@ colours = {
     'ELEC_BLUE': '#59CBE8'
 }
 
-screen_x = 1000
+assets_path = f'{os.path.dirname(os.path.abspath(__file__))}/assets'
+
+screen_x = 850
 screen_y = screen_x*(9/10)
 player_default_width = 150
 player_short = 100
 player_long = 225
 all_widths = [player_short,player_default_width,player_long]
 player_init_x = (screen_x-player_default_width)/2
-player_init_y = screen_y - 150
-ball_init_x = 700
-ball_init_y = screen_y - 600
+player_init_y = screen_y*(15/18)
+ball_init_x = screen_x*0.7
+ball_init_y = screen_y/3
 ball_init_height = 10
 ball_init_velocity = (-8,8)
 laser_bolt_init_width = 5

@@ -2,6 +2,7 @@ import pygame as pg
 import math
 import random
 import numpy as np
+from variables import *
 
 colours = {
     'BLUE': (0, 100, 200),
@@ -18,38 +19,6 @@ colours = {
     'ORANGE': '#f5a742',
     'ELEC_BLUE': '#59CBE8'
 }
-
-screen_x = 1000
-screen_y = screen_x*(9/10)
-player_default_width = 150
-player_short = 100
-player_long = 225
-all_widths = [player_short,player_default_width,player_long]
-player_init_x = (screen_x-player_default_width)/2
-player_init_y = screen_y - 150
-ball_init_x = 700
-ball_init_y = screen_y - 600
-ball_init_height = 10
-ball_init_velocity = (-8,8)
-laser_bolt_init_width = 5
-laser_bolt_init_height = 25
-brick_default_width = 70
-brick_default_height = 30
-
-info_bar_start = player_init_y + 40
-all_powerup_types = {
-    'Multi': ('multi',175),
-    'Fast ball': ('ball_speed',220),
-    'Unstoppable ball': ('ball_pass_through',288),
-    'Laser': ('laser',400),
-    'Fast paddle': ('paddle_speed',450),
-    'Large paddle': ('paddle_size_up',540),
-    'Small paddle': ('paddle_size_down',635),
-    'Extra Life': ('extra_life',None)
-}
-
-screen = pg.display.set_mode((screen_x,screen_y))
-
 
 class paddle(pg.sprite.Sprite):
     def __init__(self,x,y,width,powerups,lives):
@@ -90,7 +59,7 @@ class paddle(pg.sprite.Sprite):
                 if abs(frame_count - max(frames)) > 40:
                     generate_bolt = True
             if key[pg.K_UP] and generate_bolt:
-                pg.mixer.Sound.play(pg.mixer.Sound('assets/laser_shot.wav'))
+                pg.mixer.Sound.play(pg.mixer.Sound(f'{assets_path}/laser_shot.wav'))
                 laser_x = self.x + (self.width - laser_bolt_init_width)/2
                 laser_y = self.y - laser_bolt_init_height
                 laser_bolt = laser(laser_x, laser_y)
@@ -116,7 +85,6 @@ class ball():
         self.y += self.velocity[1]
         self.right += self.velocity[0]
         self.bottom += self.velocity[1]
-        self.draw_ball()
         return
 
     def draw_ball(self):
@@ -124,7 +92,7 @@ class ball():
             col = colours['PINK']
         else:
             col = colours['GREEN']
-        if self.y + self.height > player_init_y + 30: # don't draw if in the info bar section of the screen
+        if self.y + self.height > player_init_y + round(screen_y/30): # don't draw if in the info bar section of the screen
             return
         ball_centre = (self.x + 0.5*self.height, self.y + 0.5*self.height)
         pg.draw.circle(screen, col, ball_centre, radius=0.5*self.height)
@@ -152,23 +120,25 @@ class ball():
                 if self.velocity[1] > 0: # prevent glitches
                     angle = ((grad * relative_x) + intercept) * np.pi/180
                     if self.velocity[0] > 0:
-                        pg.mixer.Sound.play(pg.mixer.Sound("assets/bounce.wav"))
+                        pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/bounce.wav"))
                         self.velocity = (negate_speed*ball_velocity_magnitude*np.cos(angle), -ball_velocity_magnitude*np.sin(angle))
                         return
                     elif self.velocity[0] < 0:
-                        pg.mixer.Sound.play(pg.mixer.Sound("assets/bounce.wav"))
+                        pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/bounce.wav"))
                         self.velocity = (negate_speed*ball_velocity_magnitude*np.cos(angle), -ball_velocity_magnitude*np.sin(angle))
                         return
 
         # collision with brick
         if not (self.y > max_brick_y + 20):
-            # if ball_obj.passthrough:
             if 'ball_pass_through' in player.powerups:
                 negate_speed = 1
             else:
                 negate_speed = -1
             bricks_hit = 0
             for i, brick_obj in enumerate(all_bricks):
+                dont_change_ball_speed = False
+                if len(all_bricks) == 1:
+                    dont_change_ball_speed = True
                 if bricks_hit != 1:
                     brick_hit = False
                     l, r, t, b = (brick_obj.x, brick_obj.x + brick_default_width, brick_obj.y, brick_obj.y + brick_default_height) # left, right, top and bottom coords of the brick
@@ -177,8 +147,11 @@ class ball():
                     if abs(int(self.y) - b) < 10:
                         if l <= ball_right and self.x <= r:
                             if self.velocity[1] < 0:
-                                pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
-                                self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
+                                pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
+                                if not dont_change_ball_speed:
+                                    self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
+                                else:
+                                    self.velocity = (self.velocity[0], self.velocity[1])
                                 bricks_hit = 1
                                 brick_hit = True
 
@@ -186,8 +159,11 @@ class ball():
                     elif abs(int(ball_right) - l) < 10:
                         if t <= ball_bottom and self.y <= b:
                             if self.velocity[0] > 0:
-                                pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
-                                self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
+                                pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
+                                if not dont_change_ball_speed:
+                                    self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
+                                else:
+                                    self.velocity = (self.velocity[0], self.velocity[1])
                                 bricks_hit = 1
                                 brick_hit = True
                             
@@ -195,8 +171,11 @@ class ball():
                     elif abs(int(ball_bottom) - t) < 10:
                         if l <= ball_right and self.x <= r:
                             if self.velocity[1] > 0:
-                                pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
-                                self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
+                                pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
+                                if not dont_change_ball_speed:
+                                    self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
+                                else:
+                                    self.velocity = (self.velocity[0], self.velocity[1])
                                 bricks_hit = 1
                                 brick_hit = True
 
@@ -204,8 +183,11 @@ class ball():
                     elif abs(int(self.x) - r) < 10: 
                         if t <= ball_bottom and self.y <= b:
                             if self.velocity[0] < 0:
-                                pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
-                                self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
+                                pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
+                                if not dont_change_ball_speed:
+                                    self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
+                                else:
+                                    self.velocity = (self.velocity[0], self.velocity[1])
                                 bricks_hit = 1
                                 brick_hit = True                  
 
@@ -218,7 +200,7 @@ class ball():
         if self.y < 5:
             if self.velocity[1] < 0: # prevents getting stuck out of bounds
                 self.velocity = (self.velocity[0], -self.velocity[1])
-                pg.mixer.Sound.play(pg.mixer.Sound("assets/wall.wav"))
+                pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
         
         if ball_bottom > player_init_y + 20:
             return "dead"
@@ -226,12 +208,12 @@ class ball():
         if not 10 <= self.x <= screen_x - 10:
             if self.x < 5:
                 if self.velocity[0] < 0: # prevents getting stuck out of bounds
-                    pg.mixer.Sound.play(pg.mixer.Sound("assets/wall.wav"))
+                    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
                     self.velocity = (-self.velocity[0], self.velocity[1])
             
             if ball_right > screen_x - 5:
                 if self.velocity[0] > 0: # prevents getting stuck out of bounds
-                    pg.mixer.Sound.play(pg.mixer.Sound("assets/wall.wav"))
+                    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
                     self.velocity = (-self.velocity[0], self.velocity[1])
 
         return
@@ -447,7 +429,7 @@ class laser():
                 l, r, b = (brick_obj.x, brick_obj.x + brick_default_width, brick_obj.y + brick_default_height) # left, right and bottom coords of the brick
                 if abs(self.y - b) < 10:
                     if l <= self.x <= r:
-                        pg.mixer.Sound.play(pg.mixer.Sound("assets/smash.wav"))
+                        pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
                         bricks_hit = 1
                         brick_obj.is_alive = False
                         brick_obj.generate_powerup(all_powerups)
