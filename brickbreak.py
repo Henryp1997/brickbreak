@@ -25,13 +25,13 @@ def generate_brick_coords(level):
     return brick_coords, brick_default_width, brick_default_height, max_brick_y
 
 def draw_start_text(start_or_retry):
-    text_pos = (screen_x/2 - round(screen_x*0.11), screen_y/2 - (screen_y/9))
+    text_pos = (screen_x/2 - round(screen_x*0.15), screen_y/2 - (screen_y/9))
     font = pg.font.SysFont('Arial', 30)
     screen.blit(font.render(f'Press Space to {start_or_retry}', True, colours['RED']), text_pos)
     return
 
 def draw_game_over_screen():
-    text1_pos = (screen_x/2 - round(screen_x/10), screen_y/2 - round(screen_y*(10/9)))
+    text1_pos = (screen_x/2 - round(screen_x/10), screen_y/2 - (screen_y/9))
     text2_pos = (text1_pos[0] - round(screen_x*0.03), text1_pos[1] + round(screen_y*(5/90)))
     font = pg.font.SysFont('Arial', 30)
     screen.blit(font.render('GAME OVER', True, colours['RED']), text1_pos)
@@ -67,8 +67,6 @@ def draw_info_bar(lives,player_powerups,player_width):
 
 initialise_everything = True
 frame_count = 0
-level_true = 0
-level = level_true - 1
 # game code
 while True:
     clock = pg.time.Clock()
@@ -77,6 +75,8 @@ while True:
     screen.fill(colours['BLACK'])
 
     if initialise_everything:
+        level_true = 0
+        level = level_true - 1
         all_lasers = []
         all_bricks = []
         all_powerups = []
@@ -144,7 +144,6 @@ while True:
             if not begin:
                 all_powerups = []
                 width_memory = player.width
-                # new_x = (screen_x - width_memory)/2
                 new_x = player_init_x
                 player = objects.paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[], lives=player.lives)
                 draw_start_text(start_or_retry)
@@ -164,7 +163,7 @@ while True:
                     all_balls.append(ball_obj)
                     revive_ball = False
                     restart = False
-                print(len(all_balls))
+
                 # move paddle and check for spacebar presses for laser bolts
                 laser_bolt = player.check_keys(all_lasers,frame_count)
                 if laser_bolt is not None:
