@@ -34,9 +34,8 @@ class paddle(pg.sprite.Sprite):
         self.height = 15
         self.powerups = powerups
         self.rect = pg.Rect((self.x, self.y), (self.width, self.height))
-        # self.image = pg.image.load('tosh.jpg')
-        # self.size = self.image.get_size()
-        # self.image = pg.transform.scale(self.image, ((int(self.size[0]/5.372)), int(self.size[1]/6.525)))
+        img_name = 'paddle' if self.width == 150 else 'paddle_long' if self.width == 225 else 'paddle_short' if self.width == 100 else None
+        self.image = pg.image.load(f'{assets_path}/player_sprites/{img_name}.png').convert_alpha()
         self.rect.center = (self.x+self.width/2,self.y+self.height/2)
         return
     
@@ -66,7 +65,8 @@ class paddle(pg.sprite.Sprite):
                 return laser_bolt
 
     def draw_paddle(self):
-        pg.draw.rect(screen, colours['RED'], self.rect, width=4, border_top_left_radius=4, border_top_right_radius=4, border_bottom_left_radius=4, border_bottom_right_radius=4)
+        screen.blit(self.image, (self.x, self.y))
+        # pg.draw.rect(screen, colours['RED'], self.rect, width=4, border_top_left_radius=4, border_top_right_radius=4, border_bottom_left_radius=4, border_bottom_right_radius=4)
         return
     
 class ball():
@@ -280,7 +280,8 @@ class brick():
         return
 
     def generate_powerup(self,all_powerups):
-        pos = (int(self.x + (self.width/4)), int(self.y + (self.height/4)))
+        # pos = (int(self.x + (self.width/4)), int(self.y + (self.height/4)))
+        pos = (self.x, self.y)
         generate_powerup = random.randint(0,2)
         # generate_powerup = 0
         if generate_powerup == 0:
@@ -295,10 +296,12 @@ class powerup():
         self.speed = 3
         self.x = x
         self.y = y
-        self.width = brick_default_width/2
-        self.height = brick_default_height/2
+        self.width = brick_default_width
+        self.height = brick_default_height
         self.is_alive = is_alive
         self.power_type = power_type
+        img_name = all_powerup_types[list(all_powerup_types.keys())[[j[0] for i, j in enumerate(list(all_powerup_types.values()))].index(power_type)]][2]
+        self.image = pg.image.load(f'{assets_path}/powerup_sprites/{img_name}.png').convert_alpha()
         return
 
     def update_position(self):
@@ -314,11 +317,14 @@ class powerup():
         elif self.power_type == 'ball_pass_through':
             pg.draw.rect(screen, colours['GREY1'], (self.x, self.y, self.width, self.height))
         elif self.power_type == 'multi':
-            pg.draw.rect(screen, colours['PURPLE'], (self.x, self.y, self.width, self.height))
+            screen.blit(self.image, (self.x, self.y))
+            # pg.draw.rect(screen, colours['PURPLE'], (self.x, self.y, self.width, self.height))
         elif self.power_type == 'laser':
-            pg.draw.rect(screen, colours['ORANGE'], (self.x, self.y, self.width, self.height))
-        else:
-            pg.draw.rect(screen, colours['RED'], (self.x, self.y, self.width, self.height))
+            screen.blit(self.image, (self.x, self.y))
+            # pg.draw.rect(screen, colours['ORANGE'], (self.x, self.y, self.width, self.height))
+        elif self.power_type == 'extra_life':
+            screen.blit(self.image, (self.x, self.y))
+            # pg.draw.rect(screen, colours['RED'], (self.x, self.y, self.width, self.height))
         return
     
     def check_collisions(self,player,old_balls_list,all_powerups):

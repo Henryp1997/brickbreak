@@ -38,14 +38,14 @@ brick_default_height = 30
 
 info_bar_start = player_init_y + 40
 all_powerup_types = {
-    'Multi': ('multi',175),
-    'Fast ball': ('ball_speed',220),
-    'Unstoppable ball': ('ball_pass_through',288),
-    'Laser': ('laser',400),
-    'Fast paddle': ('paddle_speed',450),
-    'Large paddle': ('paddle_size_up',540),
-    'Small paddle': ('paddle_size_down',635),
-    'Extra Life': ('extra_life',None)
+    'Multi': ('multi',175,'multi_powerup'),
+    'Fast ball': ('ball_speed',220,'fast_ball_powerup'),
+    'Unstoppable ball': ('ball_pass_through',288,'unstop_powerup'),
+    'Laser': ('laser',400,'laser_powerup'),
+    'Fast paddle': ('paddle_speed',450,'fast_pad_powerup'),
+    'Large paddle': ('paddle_size_up',540,'large_powerup'),
+    'Small paddle': ('paddle_size_down',635,'small_powerup'),
+    'Extra Life': ('extra_life',None,'life_powerup')
 }
 
 screen = pg.display.set_mode((screen_x,screen_y))
