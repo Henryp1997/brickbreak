@@ -28,9 +28,9 @@ class paddle(pg.sprite.Sprite):
         self.width = width
         self.lives = lives
         if 'paddle_speed' in powerups:
-            self.speed = 18
+            self.speed = 15
         else:
-            self.speed = 12
+            self.speed = 10
         self.height = 15
         self.powerups = powerups
         self.rect = pg.Rect((self.x, self.y), (self.width, self.height))
@@ -359,8 +359,7 @@ class powerup():
                 # even though we're considering the ball here, still store powerups in the player object
                 elif self.power_type == 'ball_speed':
                     for k, ball_obj in enumerate(old_balls_list):
-                        # 242 comes from the sum of 11**2 and 11**2 --> increasing speed from initial (8,8) to (11,11)
-                        new_velocity = (math.sqrt(242/128)*b_v_store[k][0], math.sqrt(242/128)*b_v_store[k][1]) if abs(b_v_mag_store[k]**2 - 128) < 1 else b_v_store[k]
+                        new_velocity = (math.sqrt(162/98)*b_v_store[k][0], math.sqrt(162/98)*b_v_store[k][1]) if abs(b_v_mag_store[k]**2 - 98) < 1 else b_v_store[k]
                         ball_obj = ball(x=b_x_store[k], y=b_y_store[k], velocity=new_velocity, passthrough=b_pass_store[k])
                         new_balls_list.append(ball_obj)
                     powerups = [i for i in player.powerups if i != "ball_speed"]

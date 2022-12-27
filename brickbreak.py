@@ -159,6 +159,8 @@ while True:
                         pg.quit()
                         sys.exit()
             elif begin:
+                ### MAIN GAME LOOP ###
+                print(player.speed)
                 if revive_ball or restart:
                     ball_obj.x = ball_init_x
                     ball_obj.y = ball_init_y
