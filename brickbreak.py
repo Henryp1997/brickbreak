@@ -126,16 +126,20 @@ while True:
             else:
                 for brick_obj in all_bricks:
                     if brick_obj.is_alive:
-                        brick_obj.draw_brick_sprite()
+                        if brick_obj.double_hit and brick_obj.health == 1:
+                            cracked = True
+                        else:
+                            cracked = False
+                        brick_obj.draw_brick_sprite(cracked)
             
             if generate_level:
                 all_balls = []
                 brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
-                [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,is_alive=True)) for coords in brick_coords]
+                [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,double_hit=True,health=2,is_alive=True)) for coords in brick_coords]
                 ball_obj = objects.ball(x=ball_init_x,y=ball_init_y,velocity=ball_init_velocity,passthrough=False)
                 all_balls.append(ball_obj)
                 generate_level = False
- 
+
             if use_toshiba:
                 group.draw(screen)
             else:
