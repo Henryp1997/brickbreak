@@ -55,7 +55,7 @@ class paddle(pg.sprite.Sprite):
                 generate_bolt = True
             else:
                 frames = [i[1] for i in all_lasers]
-                if abs(frame_count - max(frames)) > 40:
+                if abs(frame_count - max(frames)) > laser_cooldown_time:
                     generate_bolt = True
             if key[pg.K_UP] and generate_bolt:
                 pg.mixer.Sound.play(pg.mixer.Sound(f'{assets_path}/laser_shot.wav'))

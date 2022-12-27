@@ -21,6 +21,22 @@ def generate_brick_coords(level):
         for y in range(y_start,y_start + brick_default_height*(n_rows),brick_default_height):
             for x in range(x_start,x_start+700,brick_default_width):
                 brick_coords.append((x, y, x + brick_default_width, y + brick_default_height)) # left, top, right, bottom
+    if level == 1:
+        brick_coords = []
+        y_start = 60
+        x_start = round((screen_x - 700)/4)
+        x_start_from_right = screen_x - x_start - brick_default_width
+        n_rows = 10
+        for y in range(y_start,y_start + brick_default_height*(n_rows),brick_default_height):
+            for i, x in enumerate(range(x_start,x_start+175,brick_default_width)):
+                if i == 0:
+                    continue
+                brick_coords.append((x, y, x + brick_default_width, y + brick_default_height)) # left, top, right, bottom
+            for i, x in enumerate(range(x_start_from_right,x_start_from_right-175,-brick_default_width)):
+                if i == 0:
+                    continue
+                brick_coords.append((x, y, x + brick_default_width, y + brick_default_height)) # left, top, right, bottom
+
     max_brick_y = max([i[3] for i in brick_coords])
     return brick_coords, brick_default_width, brick_default_height, max_brick_y
 
@@ -135,7 +151,7 @@ while True:
             if generate_level:
                 all_balls = []
                 brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
-                [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,double_hit=True,health=2,is_alive=True)) for coords in brick_coords]
+                [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,double_hit=False,health=1,is_alive=True)) for coords in brick_coords]
                 ball_obj = objects.ball(x=ball_init_x,y=ball_init_y,velocity=ball_init_velocity,passthrough=False)
                 all_balls.append(ball_obj)
                 generate_level = False
@@ -160,7 +176,6 @@ while True:
                         sys.exit()
             elif begin:
                 ### MAIN GAME LOOP ###
-                print(player.speed)
                 if revive_ball or restart:
                     ball_obj.x = ball_init_x
                     ball_obj.y = ball_init_y

@@ -30,9 +30,10 @@ player_init_y = screen_y*(15/18)
 ball_init_x = screen_x*0.7
 ball_init_y = screen_y/3
 ball_init_height = 10
-ball_init_velocity = (-8,8)
+ball_init_velocity = (-7,7)
 laser_bolt_init_width = 5
 laser_bolt_init_height = 25
+laser_cooldown_time = 50 # time in frames
 brick_default_width = 70
 brick_default_height = 30
 
