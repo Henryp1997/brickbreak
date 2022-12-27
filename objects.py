@@ -306,25 +306,7 @@ class powerup():
 
     def update_position(self):
         self.y += self.speed
-        if self.power_type == 'paddle_size_up':
-            pg.draw.rect(screen, colours['GREEN'], (self.x, self.y, self.width, self.height))
-        elif self.power_type == 'paddle_size_down':
-            pg.draw.rect(screen, colours['BLUE'], (self.x, self.y, self.width, self.height))
-        elif self.power_type == 'paddle_speed':
-            pg.draw.rect(screen, colours['YELLOW'], (self.x, self.y, self.width, self.height))
-        elif self.power_type == 'ball_speed':
-            pg.draw.rect(screen, colours['PINK'], (self.x, self.y, self.width, self.height))
-        elif self.power_type == 'ball_pass_through':
-            pg.draw.rect(screen, colours['GREY1'], (self.x, self.y, self.width, self.height))
-        elif self.power_type == 'multi':
-            screen.blit(self.image, (self.x, self.y))
-            # pg.draw.rect(screen, colours['PURPLE'], (self.x, self.y, self.width, self.height))
-        elif self.power_type == 'laser':
-            screen.blit(self.image, (self.x, self.y))
-            # pg.draw.rect(screen, colours['ORANGE'], (self.x, self.y, self.width, self.height))
-        elif self.power_type == 'extra_life':
-            screen.blit(self.image, (self.x, self.y))
-            # pg.draw.rect(screen, colours['RED'], (self.x, self.y, self.width, self.height))
+        screen.blit(self.image, (self.x, self.y))
         return
     
     def check_collisions(self,player,old_balls_list,all_powerups):
