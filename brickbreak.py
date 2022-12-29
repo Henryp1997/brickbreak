@@ -3,6 +3,7 @@ from pygame.locals import *
 import sys
 from objects import *
 import objects
+import time
 
 pg.init()
 pg.display.set_caption("Brickbreaker")
@@ -83,13 +84,15 @@ def draw_info_bar(lives,player_powerups,player_width):
 
 initialise_everything = True
 frame_count = 0
+frames = [0,0]
+got_laser = False
 # game code
 while True:
     clock = pg.time.Clock()
     clock.tick(60)
     frame_count += 1
     screen.fill(colours['BLACK'])
-
+    
     if initialise_everything:
         level_true = 0
         level = level_true - 1
@@ -185,6 +188,13 @@ while True:
                     revive_ball = False
                     restart = False
 
+                if 'laser' in player.powerups:
+                    with open(f'{assets_path}/got_laser.txt', 'r') as f:
+                        data = f.readlines()
+                    tm = float(data[0])
+                    if time.time() - tm > 10:
+                        player.powerups = [pwr for pwr in player.powerups if pwr != 'laser']
+
                 # move paddle and check for spacebar presses for laser bolts
                 laser_bolt = player.check_keys(all_lasers,frame_count)
                 if laser_bolt is not None:
@@ -237,6 +247,8 @@ while True:
         powerups_memory = player.powerups
         width_memory = player.width
         lives_memory = player.lives
+
+        frames[1] = frame_count
 
         for event in pg.event.get():
             if event.type == KEYDOWN and event.key == K_ESCAPE:

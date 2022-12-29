@@ -3,6 +3,7 @@ import math
 import random
 import numpy as np
 from variables import *
+import time
 
 colours = {
     'BLUE': (0, 100, 200),
@@ -233,7 +234,7 @@ class brick():
         else:
             default_image = 'brick_h1.png'
         self.image = pg.image.load(f'{assets_path}/{default_image}').convert_alpha()
-        self.image_cracked = pg.image.load(f'{assets_path}/brick_cracked.png').convert_alpha()
+        self.image_cracked = pg.image.load(f'{assets_path}/brick_h1.png').convert_alpha()
         return
 
     def draw_brick_sprite(self, cracked):
@@ -345,6 +346,8 @@ class powerup():
                     player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=p_l_store)
                     new_balls_list = old_balls_list
                 elif self.power_type == 'laser':
+                    with open(f'{assets_path}/got_laser.txt', 'w') as f:
+                        f.write(f'{time.time()}')
                     powerups = [i for i in player.powerups if i != "laser"]
                     powerups.append("laser")
                     player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=p_l_store)
