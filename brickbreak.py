@@ -21,7 +21,7 @@ def generate_brick_coords(level):
         n_rows = 3
         for y in range(y_start,y_start + brick_default_height*(n_rows),brick_default_height):
             for x in range(x_start,x_start+700,brick_default_width):
-                brick_coords.append((x, y, x + brick_default_width, y + brick_default_height)) # left, top, right, bottom
+                brick_coords.append([x, y, x + brick_default_width, y + brick_default_height, 'h1']) # left, top, right, bottom
     if level == 1:
         brick_coords = []
         y_start = 60
@@ -32,11 +32,20 @@ def generate_brick_coords(level):
             for i, x in enumerate(range(x_start,x_start+175,brick_default_width)):
                 if i == 0:
                     continue
-                brick_coords.append((x, y, x + brick_default_width, y + brick_default_height)) # left, top, right, bottom
+                brick_coords.append([x, y, x + brick_default_width, y + brick_default_height]) # left, top, right, bottom
             for i, x in enumerate(range(x_start_from_right,x_start_from_right-175,-brick_default_width)):
                 if i == 0:
                     continue
-                brick_coords.append((x, y, x + brick_default_width, y + brick_default_height)) # left, top, right, bottom
+                brick_coords.append([x, y, x + brick_default_width, y + brick_default_height]) # left, top, right, bottom
+        
+        l = [i[0] for i in brick_coords][0:4]
+        l.sort()
+        
+        for coords in brick_coords:
+            if coords[0] == l[1] or coords[0] == l[2]:
+                coords.append('h2')
+            else:
+                coords.append('h1')
 
     max_brick_y = max([i[3] for i in brick_coords])
     return brick_coords, brick_default_width, brick_default_height, max_brick_y
@@ -80,7 +89,7 @@ def draw_info_bar(lives,player_powerups,player_width):
                     col = colours['RED']
                 else:
                     col = colours['GREY1']
-            screen.blit(font.render(j, True, col),(all_powerup_types[j][1], info_bar_start + 65))
+            screen.blit(font.render(j, True, col),(all_powerup_types[j][1], info_bar_start + screen_x*(65/850)))
 
 initialise_everything = True
 frame_count = 0
@@ -145,16 +154,12 @@ while True:
             else:
                 for brick_obj in all_bricks:
                     if brick_obj.is_alive:
-                        if brick_obj.double_hit and brick_obj.health == 1:
-                            cracked = True
-                        else:
-                            cracked = False
-                        brick_obj.draw_brick_sprite(cracked)
+                        brick_obj.draw_brick_sprite()
             
             if generate_level:
                 all_balls = []
                 brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
-                [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,double_hit=False,health=1,is_alive=True)) for coords in brick_coords]
+                [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,health=coords[4],is_alive=True)) for coords in brick_coords]
                 ball_obj = objects.ball(x=ball_init_x,y=ball_init_y,velocity=ball_init_velocity,passthrough=False)
                 all_balls.append(ball_obj)
                 generate_level = False

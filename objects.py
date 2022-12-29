@@ -205,15 +205,14 @@ class ball():
         return
 
 class brick():
-    def __init__(self,x,y,width,height,double_hit,health,is_alive):
+    def __init__(self,x,y,width,height,health,is_alive):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-        self.health = health
+        self.health = 2 if health == 'h2' else 1 if health == 'h1' else None
         self.is_alive = is_alive
-        self.double_hit = double_hit
-        if self.double_hit:
+        if self.health == 2:
             default_image = 'brick_h2.png'
         else:
             default_image = 'brick_h1.png'
@@ -221,9 +220,9 @@ class brick():
         self.image_cracked = pg.image.load(f'{assets_path}/brick_h1.png').convert_alpha()
         return
 
-    def draw_brick_sprite(self, cracked):
+    def draw_brick_sprite(self):
         sprite = True
-        if cracked:
+        if self.health == 1:
             screen.blit(self.image_cracked, (self.x, self.y))
             return
         screen.blit(self.image, (self.x, self.y))
