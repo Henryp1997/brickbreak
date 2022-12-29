@@ -5,22 +5,6 @@ import numpy as np
 from variables import *
 import time
 
-colours = {
-    'BLUE': (0, 100, 200),
-    'DARK_BLUE': (0,55,255),
-    'RED' : (225, 25, 25),
-    'YELLOW': (255, 255, 0),
-    'GREEN': (0, 220, 40),
-    'BLACK': (15, 15, 15),
-    'WHITE': '#ffffff',
-    'GREY1': '#d1d1d1',
-    'GREY2': '#a1a1a1',
-    'PINK': '#fc03f8',
-    'PURPLE': '#7734eb',
-    'ORANGE': '#f5a742',
-    'ELEC_BLUE': '#59CBE8'
-}
-
 class paddle(pg.sprite.Sprite):
     def __init__(self,x,y,width,powerups,lives):
         pg.sprite.Sprite.__init__(self)
