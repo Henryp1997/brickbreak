@@ -63,6 +63,8 @@ class ball():
         self.passthrough = passthrough
         self.right = self.x + self.height # width and height the same because it's a square
         self.bottom = self.y + self.height
+        self.image = pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha()
+        self.unstop_image = pg.image.load(f'{assets_path}/player_sprites/ball_unstop.png').convert_alpha()
         return
     
     def move(self):
@@ -74,13 +76,12 @@ class ball():
 
     def draw_ball(self):
         if self.passthrough:
-            col = colours['PINK']
+            img = self.unstop_image
         else:
-            col = colours['GREEN']
+            img = self.image
         if self.y + self.height > player_init_y + round(screen_y/30): # don't draw if in the info bar section of the screen
             return
-        ball_centre = (self.x + 0.5*self.height, self.y + 0.5*self.height)
-        pg.draw.circle(screen, col, ball_centre, radius=0.5*self.height)
+        screen.blit(img, (self.x, self.y))
         return
         
     def check_collision(self,player,all_bricks,all_powerups,max_brick_y):
