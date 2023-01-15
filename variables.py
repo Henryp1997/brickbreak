@@ -19,7 +19,7 @@ colours = {
 
 assets_path = f'{os.path.dirname(os.path.abspath(__file__))}/assets'
 
-screen_x = 850
+screen_x = 1000
 screen_y = screen_x*(9/10)
 player_default_width = 150
 player_short = 100
