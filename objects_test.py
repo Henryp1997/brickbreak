@@ -65,6 +65,8 @@ class ball():
         self.bottom = self.y + self.height
         self.image = pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha()
         self.unstop_image = pg.image.load(f'{assets_path}/player_sprites/ball_unstop.png').convert_alpha()
+        self.image_rect = self.image.get_rect()
+        self.unstop_image_rect = self.unstop_image.get_rect()
         return
     
     def move(self):
@@ -128,6 +130,11 @@ class ball():
                 if bricks_hit != 1:
                     brick_hit = False
                     l, r, t, b = (brick_obj.x, brick_obj.x + brick_default_width, brick_obj.y, brick_obj.y + brick_default_height) # left, right, top and bottom coords of the brick
+
+                    hit = pg.Rect(self.x,self.y,self.height,self.height).colliderect(brick_obj.image_rect)
+                    print(hit)
+                    if hit:
+                        print(brick_obj.x, brick_obj.y)
 
                     # hit brick from below
                     if abs(int(self.y) - b) < 10:
@@ -219,6 +226,8 @@ class brick():
             default_image = 'brick_h1.png'
         self.image = pg.image.load(f'{assets_path}/{default_image}').convert_alpha()
         self.image_cracked = pg.image.load(f'{assets_path}/brick_h1.png').convert_alpha()
+        self.image_rect = self.image.get_rect()
+        self.image_cracked_rect = self.image_cracked.get_rect(topleft=(self.x,self.y))
         return
 
     def draw_brick_sprite(self):

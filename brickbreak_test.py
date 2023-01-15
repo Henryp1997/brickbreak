@@ -13,7 +13,8 @@ def generate_brick_coords(level):
     brick_default_height = 30
     if level == -1:
         brick_coords = []
-        brick_coords.append((400,400,470,430))
+        brick_coords.append([400,100,470,130,'h1'])
+        brick_coords.append([500,400,570,430,'h1'])
     if level == 0:
         brick_coords = []
         y_start = 80

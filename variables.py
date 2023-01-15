@@ -14,7 +14,8 @@ colours = {
     'PINK': '#fc03f8',
     'PURPLE': '#7734eb',
     'ORANGE': '#f5a742',
-    'ELEC_BLUE': '#59CBE8'
+    'ELEC_BLUE': '#59CBE8',
+    'FIRE': '#fc4903'
 }
 
 assets_path = f'{os.path.dirname(os.path.abspath(__file__))}/assets'
