@@ -51,7 +51,7 @@ def generate_brick_coords(level):
     return brick_coords, brick_default_width, brick_default_height, max_brick_y
 
 def draw_start_text(start_or_retry):
-    text_pos = (screen_x/2 - round(screen_x*0.15), screen_y/2 - (screen_y/9))
+    text_pos = (screen_x/2 - round(screen_x*0.13), screen_y/2 - (screen_y/9))
     font = pg.font.SysFont('Arial', 30)
     screen.blit(font.render(f'Press Space to {start_or_retry}', True, colours['RED']), text_pos)
     return
