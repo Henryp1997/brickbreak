@@ -116,72 +116,81 @@ class ball():
 
         # collision with brick
         if not (self.y > max_brick_y + 20):
+            all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in all_bricks]
             if 'ball_pass_through' in player.powerups:
                 negate_speed = 1
             else:
                 negate_speed = -1
-            bricks_hit = 0
+                
+            brick_hit = False
             for i, brick_obj in enumerate(all_bricks):
                 dont_change_ball_speed = False
                 if len(all_bricks) == 1:
                     dont_change_ball_speed = True # this variable prevents bugs when the ball is carried through to a new level
-                if bricks_hit != 1:
-                    brick_hit = False
-                    l, r, t, b = (brick_obj.x, brick_obj.x + brick_default_width, brick_obj.y, brick_obj.y + brick_default_height) # left, right, top and bottom coords of the brick
+                l, r, t, b = (brick_obj.x, brick_obj.x + brick_default_width, brick_obj.y, brick_obj.y + brick_default_height) # left, right, top and bottom coords of the brick
 
-                    # hit brick from below
+                l_alive = True if (l-brick_default_width, t) in all_bricks_coords else False
+                r_alive = True if (r, t) in all_bricks_coords else False
+                t_alive = True if (l, t-brick_default_height) in all_bricks_coords else False
+                b_alive = True if (l, b) in all_bricks_coords else False
+
+                # hit brick from below
+                if not b_alive:
                     if abs(int(self.y) - b) < 10:
                         if l <= ball_right and self.x <= r:
                             if self.velocity[1] < 0:
                                 if not dont_change_ball_speed:
+                                    if negate_speed == 1 and brick_obj.health == 2:
+                                        negate_speed *= -1
                                     self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
-                                else:
-                                    self.velocity = (self.velocity[0], self.velocity[1])
-                                bricks_hit = 1
-                                brick_hit = True
+                                brick_hit = True 
+                                break
 
-                    # hit brick from left side
-                    elif abs(int(ball_right) - l) < 10:
+                # hit brick from left side
+                if not l_alive:
+                    if abs(int(ball_right) - l) < 10:
                         if t <= ball_bottom and self.y <= b:
                             if self.velocity[0] > 0:
                                 if not dont_change_ball_speed:
+                                    if negate_speed == 1 and brick_obj.health == 2:
+                                        negate_speed *= -1
                                     self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
-                                else:
-                                    self.velocity = (self.velocity[0], self.velocity[1])
-                                bricks_hit = 1
-                                brick_hit = True
-                            
-                    # hit brick from above
-                    elif abs(int(ball_bottom) - t) < 10:
+                                brick_hit = True 
+                                break
+                
+                # hit brick from above
+                if not t_alive:
+                    if abs(int(ball_bottom) - t) < 10:
                         if l <= ball_right and self.x <= r:
                             if self.velocity[1] > 0:
                                 if not dont_change_ball_speed:
+                                    if negate_speed == 1 and brick_obj.health == 2:
+                                        negate_speed *= -1
                                     self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
-                                else:
-                                    self.velocity = (self.velocity[0], self.velocity[1])
-                                bricks_hit = 1
-                                brick_hit = True
+                                brick_hit = True 
+                                break
 
-                    # hit brick from right side
-                    elif abs(int(self.x) - r) < 10: 
+                # hit brick from right side
+                if not r_alive:
+                    if abs(int(self.x) - r) < 10: 
                         if t <= ball_bottom and self.y <= b:
                             if self.velocity[0] < 0:
                                 if not dont_change_ball_speed:
-                                    self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
-                                else:
-                                    self.velocity = (self.velocity[0], self.velocity[1])
-                                bricks_hit = 1
-                                brick_hit = True               
+                                    if negate_speed == 1 and brick_obj.health == 2:
+                                        negate_speed *= -1
+                                    self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
+                                brick_hit = True      
+                                break       
 
-                    if brick_hit:
-                        brick_obj.health -= 1
-                        if brick_obj.health == 0:
-                            pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
-                            brick_obj.is_alive = False
-                            all_bricks.pop(i)
-                        else:
-                            pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
-                        brick_obj.generate_powerup(all_powerups)
+            if brick_hit:
+                brick_obj.health -= 1
+                if brick_obj.health == 0:
+                    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
+                    brick_obj.is_alive = False
+                    all_bricks.pop(i)
+                else:
+                    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
+                brick_obj.generate_powerup(all_powerups)
 
         # collision with walls
         if self.y < 5:
@@ -219,49 +228,49 @@ class brick():
             default_image = 'brick_h1.png'
         self.image = pg.image.load(f'{assets_path}/{default_image}').convert_alpha()
         self.image_cracked = pg.image.load(f'{assets_path}/brick_h1.png').convert_alpha()
+        self.image_rect = self.image.get_rect(topleft=(self.x, self.y))
+        self.image_cracked_rect = self.image_cracked.get_rect(topleft=(self.x,self.y))
         return
 
     def draw_brick_sprite(self):
         sprite = True
-        if self.health == 1:
-            screen.blit(self.image_cracked, (self.x, self.y))
-            return
-        screen.blit(self.image, (self.x, self.y))
+        if sprite:
+            if self.health == 1:
+                screen.blit(self.image_cracked, (self.x, self.y))
+                return
+            screen.blit(self.image, (self.x, self.y))
         
-        if not sprite:
-            x = self.x
-            y = self.y
-            brick_default_width = self.width
-            brick_default_height = self.height
             # draw main rectangle
-            pg.draw.rect(screen, colours['GREY1'], pg.Rect((x,y),(brick_default_width,brick_default_height)), width=0)
+            # pg.draw.rect(screen, colours['GREY1'], self.image_rect, width=0)
+            # collision_rect = (self.image_rect[0] + 5, self.image_rect[1] + 5, self.image_rect[2] - 10, self.image_rect[3] - 10)
+            # pg.draw.rect(screen, colours['RED'], collision_rect, width=0)
             # draw brick border
-            pg.draw.rect(screen, colours['BLACK'], pg.Rect((x,y),(brick_default_width,brick_default_height)), width=2)
+            # pg.draw.rect(screen, colours['BLACK'], pg.Rect((x,y),(brick_default_width,brick_default_height)), width=2)
             # draw lines for cracked pattern
-            if cracked:
-                arr = [(19, 29, 32, 6), (46, 8, 41, 3), (4, 15, 19, 7), (17, 2, 24, 5), (19, 15, 6, 28), (31, 16, 22, 14), (46, 8, 32, 7), (14, 2, 1, 4), (44, 14, 66, 6), (68, 27, 56, 1)]
-                for i in range(10):
-                    pg.draw.line(screen, colours['BLACK'], (x+arr[i][0],y+arr[i][1]),(x+arr[i][2],y+arr[i][3]))
+            # if cracked:
+            #     arr = [(19, 29, 32, 6), (46, 8, 41, 3), (4, 15, 19, 7), (17, 2, 24, 5), (19, 15, 6, 28), (31, 16, 22, 14), (46, 8, 32, 7), (14, 2, 1, 4), (44, 14, 66, 6), (68, 27, 56, 1)]
+            #     for i in range(10):
+            #         pg.draw.line(screen, colours['BLACK'], (x+arr[i][0],y+arr[i][1]),(x+arr[i][2],y+arr[i][3]))
             # brick pattern
-            for j in range(3):
-                y_start = y + (brick_default_height*j)/3
-                y_end = y_start + (brick_default_height)/3
-                if j != 0:
-                    pg.draw.line(screen, colours['BLACK'], (x, y_start), (x + brick_default_width, y_start))
-                if j % 2 == 1:
-                    for i in range(1,6):
-                        if i % 2 == 1:
-                            x_line = x + (brick_default_width*i)/6
-                            pg.draw.line(screen, colours['BLACK'], (x_line, y_start), (x_line, y_end))
-                elif j % 2 == 0:
-                    if j == 0:
-                        y_start += 2
-                        y_end -= 1
-                    elif j == 2:
-                        y_end -=3
-                    for i in range(1,3):
-                        x_line = x + (brick_default_width*i)/3
-                        pg.draw.line(screen, colours['BLACK'], (x_line, y_start), (x_line, y_end))
+            # for j in range(3):
+            #     y_start = y + (brick_default_height*j)/3
+            #     y_end = y_start + (brick_default_height)/3
+            #     if j != 0:
+            #         pg.draw.line(screen, colours['BLACK'], (x, y_start), (x + brick_default_width, y_start))
+            #     if j % 2 == 1:
+            #         for i in range(1,6):
+            #             if i % 2 == 1:
+            #                 x_line = x + (brick_default_width*i)/6
+            #                 pg.draw.line(screen, colours['BLACK'], (x_line, y_start), (x_line, y_end))
+            #     elif j % 2 == 0:
+            #         if j == 0:
+            #             y_start += 2
+            #             y_end -= 1
+            #         elif j == 2:
+            #             y_end -=3
+            #         for i in range(1,3):
+            #             x_line = x + (brick_default_width*i)/3
+            #             pg.draw.line(screen, colours['BLACK'], (x_line, y_start), (x_line, y_end))
         return
 
     def generate_powerup(self,all_powerups):

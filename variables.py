@@ -1,5 +1,11 @@
 import pygame as pg
 import os
+from win32api import GetSystemMetrics
+
+y_res = GetSystemMetrics(0)
+x_res = GetSystemMetrics(1)
+screen_x = int(0.75*x_res)
+screen_y = int(screen_x*(9/10))
 
 colours = {
     'BLUE': (0, 100, 200),
@@ -20,16 +26,13 @@ colours = {
 
 assets_path = f'{os.path.dirname(os.path.abspath(__file__))}/assets'
 
-screen_x = 1000
-screen_y = screen_x*(9/10)
 player_default_width = 150
 player_short = 100
 player_long = 225
 all_widths = [player_short,player_default_width,player_long]
 player_init_x = (screen_x-player_default_width)/2
 player_init_y = screen_y*(15/18)
-ball_init_x = screen_x*0.7
-ball_init_y = screen_y/3
+ball_init_pos = {0: (screen_x*0.7,screen_y/3), 1 :(screen_x*0.6,screen_y/3)}
 ball_init_height = 10
 ball_init_velocity = (-7,7)
 laser_bolt_init_width = 5

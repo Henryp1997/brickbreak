@@ -103,14 +103,14 @@ while True:
     screen.fill(colours['BLACK'])
     
     if initialise_everything:
-        level_true = 0
+        level_true = 1
         level = level_true - 1
         all_lasers = []
         all_bricks = []
         all_powerups = []
 
         player = objects.paddle(x=player_init_x, y=player_init_y, width=player_default_width, powerups=[], lives=3)
-        ball_obj = objects.ball(x=ball_init_x,y=ball_init_y,velocity=ball_init_velocity,passthrough=False)
+        ball_obj = objects.ball(x=ball_init_pos[level][0],y=ball_init_pos[level][1],velocity=ball_init_velocity,passthrough=False)
 
         powerups_memory = player.powerups
         width_memory = player.width
@@ -160,7 +160,7 @@ while True:
                 all_balls = []
                 brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
                 [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,health=coords[4],is_alive=True)) for coords in brick_coords]
-                ball_obj = objects.ball(x=ball_init_x,y=ball_init_y,velocity=ball_init_velocity,passthrough=False)
+                ball_obj = objects.ball(x=ball_init_pos[level][0],y=ball_init_pos[level][1],velocity=ball_init_velocity,passthrough=False)
                 all_balls.append(ball_obj)
                 generate_level = False
 
@@ -176,7 +176,7 @@ while True:
                 player = objects.paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[], lives=player.lives)
                 draw_start_text(start_or_retry)
                 # pg.draw.circle(screen, colours['FIRE'], (ball_init_x + 0.5*ball_init_height, ball_init_y + 0.5*ball_init_height), radius=10)
-                screen.blit(pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha(), (ball_init_x, ball_init_y))
+                screen.blit(pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha(), (ball_init_pos[level][0], ball_init_pos[level][1]))
                 for event in pg.event.get():
                     if event.type == KEYDOWN and event.key == K_SPACE:
                         begin = True
@@ -186,8 +186,8 @@ while True:
             elif begin:
                 ### MAIN GAME LOOP ###
                 if revive_ball or restart:
-                    ball_obj.x = ball_init_x
-                    ball_obj.y = ball_init_y
+                    ball_obj.x = ball_init_pos[level][0]
+                    ball_obj.y = ball_init_pos[level][1]
                     ball_obj.velocity = ball_init_velocity
                     ball_obj.passthrough = False
                     all_balls.append(ball_obj)
