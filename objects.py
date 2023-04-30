@@ -126,7 +126,8 @@ class ball():
             for i, brick_obj in enumerate(all_bricks):
                 dont_change_ball_speed = False
                 if len(all_bricks) == 1:
-                    dont_change_ball_speed = True # this variable prevents bugs when the ball is carried through to a new level
+                    if all_bricks[0].health < 3: # only change this variable if the brick is destructable (i.e., health 1 or 2)
+                        dont_change_ball_speed = True # this variable prevents bugs when the ball is carried through to a new level
                 l, r, t, b = (brick_obj.x, brick_obj.x + brick_default_width, brick_obj.y, brick_obj.y + brick_default_height) # left, right, top and bottom coords of the brick
 
                 l_alive = True if (l-brick_default_width, t) in all_bricks_coords else False
@@ -140,8 +141,9 @@ class ball():
                         if l <= ball_right and self.x <= r:
                             if self.velocity[1] < 0:
                                 if not dont_change_ball_speed:
-                                    if negate_speed == 1 and brick_obj.health == 2:
+                                    if negate_speed == 1 and brick_obj.health > 1:
                                         negate_speed *= -1
+                                    print(self.velocity)
                                     self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
                                 brick_hit = True 
                                 break
@@ -152,7 +154,7 @@ class ball():
                         if t <= ball_bottom and self.y <= b:
                             if self.velocity[0] > 0:
                                 if not dont_change_ball_speed:
-                                    if negate_speed == 1 and brick_obj.health == 2:
+                                    if negate_speed == 1 and brick_obj.health > 1:
                                         negate_speed *= -1
                                     self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
                                 brick_hit = True 
@@ -164,7 +166,7 @@ class ball():
                         if l <= ball_right and self.x <= r:
                             if self.velocity[1] > 0:
                                 if not dont_change_ball_speed:
-                                    if negate_speed == 1 and brick_obj.health == 2:
+                                    if negate_speed == 1 and brick_obj.health > 1:
                                         negate_speed *= -1
                                     self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
                                 brick_hit = True 
@@ -176,14 +178,15 @@ class ball():
                         if t <= ball_bottom and self.y <= b:
                             if self.velocity[0] < 0:
                                 if not dont_change_ball_speed:
-                                    if negate_speed == 1 and brick_obj.health == 2:
+                                    if negate_speed == 1 and brick_obj.health > 1:
                                         negate_speed *= -1
                                     self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
                                 brick_hit = True      
                                 break       
 
             if brick_hit:
-                brick_obj.health -= 1
+                if brick_obj.health < 3:
+                    brick_obj.health -= 1
                 if brick_obj.health == 0:
                     pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
                     brick_obj.is_alive = False
@@ -220,9 +223,11 @@ class brick():
         self.y = y
         self.width = width
         self.height = height
-        self.health = 2 if health == 'h2' else 1 if health == 'h1' else None
+        self.health = int(health.split('h')[1])
         self.is_alive = is_alive
-        if self.health == 2:
+        if self.health == 3:
+            default_image = 'brick_h3.png'
+        elif self.health == 2:
             default_image = 'brick_h2.png'
         else:
             default_image = 'brick_h1.png'
@@ -233,44 +238,10 @@ class brick():
         return
 
     def draw_brick_sprite(self):
-        sprite = True
-        if sprite:
-            if self.health == 1:
-                screen.blit(self.image_cracked, (self.x, self.y))
-                return
-            screen.blit(self.image, (self.x, self.y))
-        
-            # draw main rectangle
-            # pg.draw.rect(screen, colours['GREY1'], self.image_rect, width=0)
-            # collision_rect = (self.image_rect[0] + 5, self.image_rect[1] + 5, self.image_rect[2] - 10, self.image_rect[3] - 10)
-            # pg.draw.rect(screen, colours['RED'], collision_rect, width=0)
-            # draw brick border
-            # pg.draw.rect(screen, colours['BLACK'], pg.Rect((x,y),(brick_default_width,brick_default_height)), width=2)
-            # draw lines for cracked pattern
-            # if cracked:
-            #     arr = [(19, 29, 32, 6), (46, 8, 41, 3), (4, 15, 19, 7), (17, 2, 24, 5), (19, 15, 6, 28), (31, 16, 22, 14), (46, 8, 32, 7), (14, 2, 1, 4), (44, 14, 66, 6), (68, 27, 56, 1)]
-            #     for i in range(10):
-            #         pg.draw.line(screen, colours['BLACK'], (x+arr[i][0],y+arr[i][1]),(x+arr[i][2],y+arr[i][3]))
-            # brick pattern
-            # for j in range(3):
-            #     y_start = y + (brick_default_height*j)/3
-            #     y_end = y_start + (brick_default_height)/3
-            #     if j != 0:
-            #         pg.draw.line(screen, colours['BLACK'], (x, y_start), (x + brick_default_width, y_start))
-            #     if j % 2 == 1:
-            #         for i in range(1,6):
-            #             if i % 2 == 1:
-            #                 x_line = x + (brick_default_width*i)/6
-            #                 pg.draw.line(screen, colours['BLACK'], (x_line, y_start), (x_line, y_end))
-            #     elif j % 2 == 0:
-            #         if j == 0:
-            #             y_start += 2
-            #             y_end -= 1
-            #         elif j == 2:
-            #             y_end -=3
-            #         for i in range(1,3):
-            #             x_line = x + (brick_default_width*i)/3
-            #             pg.draw.line(screen, colours['BLACK'], (x_line, y_start), (x_line, y_end))
+        if self.health == 1:
+            screen.blit(self.image_cracked, (self.x, self.y))
+            return
+        screen.blit(self.image, (self.x, self.y))
         return
 
     def generate_powerup(self,all_powerups):
@@ -278,7 +249,7 @@ class brick():
         pos = (self.x, self.y)
         generate_powerup = random.randint(0,2)
         # generate_powerup = 0
-        if generate_powerup == 0:
+        if generate_powerup == 0 and self.health < 3:
             power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0,len(all_powerup_types.keys())-1)]][0]
             # power_type = 'laser'
             power_up = powerup(pos[0],pos[1],True,power_type)

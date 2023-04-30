@@ -13,7 +13,7 @@ def generate_brick_coords(level):
     brick_default_height = 30
     if level == -1:
         brick_coords = []
-        brick_coords.append((400,400,470,430))
+        brick_coords.append((400,400,470,430,'h3'))
     if level == 0:
         brick_coords = []
         y_start = 80
@@ -103,7 +103,7 @@ while True:
     screen.fill(colours['BLACK'])
     
     if initialise_everything:
-        level = 0
+        level = -1
         all_lasers = []
         all_bricks = []
         all_powerups = []
