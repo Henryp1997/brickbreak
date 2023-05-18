@@ -154,7 +154,7 @@ while True:
                 for brick_obj in all_bricks:
                     if brick_obj.is_alive:
                         brick_obj.draw_brick_sprite()
-            
+
             if generate_level:
                 all_balls = []
                 brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level-1)
@@ -175,7 +175,7 @@ while True:
                 player = objects.paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[], lives=player.lives)
                 draw_start_text(start_or_retry)
                 # pg.draw.circle(screen, colours['FIRE'], (ball_init_x + 0.5*ball_init_height, ball_init_y + 0.5*ball_init_height), radius=10)
-                screen.blit(pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha(), (ball_init_pos[level-1][0], ball_init_pos[level-1][1]))
+                screen.blit(pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha(), (ball_init_pos[level][0], ball_init_pos[level][1]))
                 for event in pg.event.get():
                     if event.type == KEYDOWN and event.key == K_SPACE:
                         begin = True
