@@ -14,7 +14,7 @@ cx_Freeze.setup(
                             f'{assets_path}/laser_shot.wav',
                             f'{assets_path}/game_over.wav',
                             f'{assets_path}/lose_life.wav',
-                            f'{assets_path}/brick_cracked.png',
+                            f'{assets_path}/brick_h3.png',
                             f'{assets_path}/brick_h1.png',
                             f'{assets_path}/brick_h2.png',
                             f'{assets_path}/player_sprites/paddle.png',

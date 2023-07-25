@@ -12,6 +12,7 @@ def generate_brick_coords(level):
     brick_default_width = 70
     brick_default_height = 30
     if level == -1:
+        # debug level
         brick_coords = []
         brick_coords.append((400,400,470,430,'h3'))
     if level == 0:
