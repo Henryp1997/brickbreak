@@ -96,6 +96,7 @@ initialise_everything = True
 frame_count = 0
 frames = [0,0]
 got_laser = False
+levels_cleared = 0
 # game code
 while True:
     clock = pg.time.Clock()
@@ -104,7 +105,7 @@ while True:
     screen.fill(colours['BLACK'])
     
     if initialise_everything:
-        level = -1
+        level = 0
         all_lasers = []
         all_bricks = []
         all_powerups = []
@@ -148,7 +149,9 @@ while True:
             pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start + round(screen_x*0.002))),width=5)
 
             if len(all_bricks) == 0:
-                level += 1
+                if levels_cleared != 0:
+                    level += 1
+                levels_cleared += 1
                 generate_level = True
                 begin = False
             else:
@@ -158,9 +161,9 @@ while True:
 
             if generate_level:
                 all_balls = []
-                brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level-1)
+                brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
                 [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,health=coords[4],is_alive=True)) for coords in brick_coords]
-                ball_obj = objects.ball(x=ball_init_pos[level-1][0],y=ball_init_pos[level-1][1],velocity=ball_init_velocity,passthrough=False)
+                ball_obj = objects.ball(x=ball_init_pos[level][0],y=ball_init_pos[level][1],velocity=ball_init_velocity,passthrough=False)
                 all_balls.append(ball_obj)
                 generate_level = False
 
@@ -186,8 +189,8 @@ while True:
             elif begin:
                 ### MAIN GAME LOOP ###
                 if revive_ball or restart:
-                    ball_obj.x = ball_init_pos[level-1][0]
-                    ball_obj.y = ball_init_pos[level-1][1]
+                    ball_obj.x = ball_init_pos[level][0]
+                    ball_obj.y = ball_init_pos[level][1]
                     ball_obj.velocity = ball_init_velocity
                     ball_obj.passthrough = False
                     all_balls.append(ball_obj)
