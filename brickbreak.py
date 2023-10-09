@@ -171,7 +171,6 @@ while True:
                 new_x = player_init_x
                 player = objects.paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[], lives=player.lives)
                 draw_start_text(start_or_retry)
-                # pg.draw.circle(screen, colours['FIRE'], (ball_init_x + 0.5*ball_init_height, ball_init_y + 0.5*ball_init_height), radius=10)
                 screen.blit(pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha(), (ball_init_pos[level][0], ball_init_pos[level][1]))
                 for event in pg.event.get():
                     if event.type == KEYDOWN and event.key == K_SPACE:

@@ -5,9 +5,8 @@ import numpy as np
 from variables import *
 import time
 
-class paddle(pg.sprite.Sprite):
-    def __init__(self,x,y,width,powerups,lives):
-        pg.sprite.Sprite.__init__(self)
+class paddle():
+    def __init__(self, x, y, width, powerups, lives):
         self.x = x
         self.y = y
         self.width = width
@@ -21,10 +20,10 @@ class paddle(pg.sprite.Sprite):
         self.rect = pg.Rect((self.x, self.y), (self.width, self.height))
         img_name = 'paddle' if self.width == 150 else 'paddle_long' if self.width == 225 else 'paddle_short' if self.width == 100 else None
         self.image = pg.image.load(f'{assets_path}/player_sprites/{img_name}.png').convert_alpha()
-        self.rect.center = (self.x+self.width/2,self.y+self.height/2)
+        self.rect.center = (self.x+self.width/2, self.y+self.height/2)
         return
     
-    def check_keys(self,all_lasers,frame_count):
+    def check_keys(self, all_lasers, frame_count):
         key = pg.key.get_pressed()
         if key[pg.K_LEFT]:
             if self.x + self.width/2 > 5:
@@ -43,7 +42,7 @@ class paddle(pg.sprite.Sprite):
                 if abs(frame_count - max(frames)) > laser_cooldown_time:
                     generate_bolt = True
             if key[pg.K_UP] and generate_bolt:
-                pg.mixer.Sound.play(pg.mixer.Sound(f'{assets_path}/laser_shot.wav'))
+                play_sound("laser_shot")
                 laser_x = self.x + (self.width - laser_bolt_init_width)/2
                 laser_y = self.y - laser_bolt_init_height
                 laser_bolt = laser(laser_x, laser_y)
@@ -51,11 +50,10 @@ class paddle(pg.sprite.Sprite):
 
     def draw_paddle(self):
         screen.blit(self.image, (self.x, self.y))
-        # pg.draw.rect(screen, colours['RED'], self.rect, width=4, border_top_left_radius=4, border_top_right_radius=4, border_bottom_left_radius=4, border_bottom_right_radius=4)
         return
     
 class ball():
-    def __init__(self,x,y,velocity,passthrough):
+    def __init__(self, x, y, velocity, passthrough):
         self.velocity = velocity
         self.height = 10
         self.x = x
@@ -84,7 +82,7 @@ class ball():
         screen.blit(img, (self.x, self.y))
         return
         
-    def change_speed_upon_brick_collide(self, brick_obj, brick_boundaries, direction, dont_change_ball_speed, negate_speed_x, negate_speed_y):
+    def change_speed_upon_brick_collide(self, brick_obj, all_bricks, all_powerups, brick_boundaries, direction, dont_change_ball_speed, negate_speed_x, negate_speed_y):
         # coords to check boundaries
         coords = (
             (self.y, self.right, self.x),
@@ -94,9 +92,9 @@ class ball():
         )
         # speeds to check direction of ball
         speeds = (
-            (self.velocity[1]),
-            (-self.velocity[0]),
-            (-self.velocity[1]),
+            (self.velocity[1]), 
+            (-self.velocity[0]), 
+            (-self.velocity[1]), 
             (self.velocity[0])
         )
         brick_hit = False
@@ -112,9 +110,19 @@ class ball():
                                 negate_speed_x *= -1
                         self.velocity = (negate_speed_x*self.velocity[0], negate_speed_y*self.velocity[1])
                     brick_hit = True 
+        if brick_hit:
+            if brick_obj.health < 3:
+                brick_obj.health -= 1
+            if brick_obj.health == 0:
+                play_sound("smash")
+                brick_obj.is_alive = False
+                all_bricks.pop(all_bricks.index(brick_obj))
+            else:
+                play_sound("wall")
+            brick_obj.generate_powerup(all_powerups)
         return brick_hit
 
-    def check_collision(self,player,all_bricks,all_powerups,max_brick_y):
+    def check_collision(self, player, all_bricks, all_powerups, max_brick_y):
         ball_velocity_magnitude = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
 
         # collision with paddle
@@ -134,24 +142,25 @@ class ball():
                 if self.velocity[1] > 0: # prevent glitches
                     angle = ((grad * relative_x) + intercept) * np.pi/180
                     if self.velocity[0] > 0:
-                        pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/bounce.wav"))
+                        play_sound("bounce")
                         self.velocity = (negate_speed*ball_velocity_magnitude*np.cos(angle), -ball_velocity_magnitude*np.sin(angle))
                         return
                     elif self.velocity[0] < 0:
-                        pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/bounce.wav"))
+                        play_sound("bounce")
                         self.velocity = (negate_speed*ball_velocity_magnitude*np.cos(angle), -ball_velocity_magnitude*np.sin(angle))
                         return
 
         # collision with brick
         if not (self.y > max_brick_y + 20):
-            all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in all_bricks]
+            bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < 1.25*brick_default_width]
+            all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in bricks_to_check]
+
             if 'ball_pass_through' in player.powerups:
                 negate_speed = 1
             else:
                 negate_speed = -1
                 
-            brick_hit = False
-            for i, brick_obj in enumerate(all_bricks):
+            for i, brick_obj in enumerate(bricks_to_check):
                 dont_change_ball_speed = False
                 if len(all_bricks) == 1:
                     if all_bricks[0].health < 3: # only change this variable if the brick is destructable (i.e., health 1 or 2)
@@ -169,50 +178,35 @@ class ball():
                 blocking_alive = (
                     True if (l, b) in all_bricks_coords else False,
                     True if (l - brick_default_width, t) in all_bricks_coords else False,
-                    True if (l, t-brick_default_height) in all_bricks_coords else False,
+                    True if (l, t - brick_default_height) in all_bricks_coords else False,
                     True if (r, t) in all_bricks_coords else False,
                 )
 
                 # hit brick from below
                 if not blocking_alive[0]:
-                    brick_hit = self.change_speed_upon_brick_collide(brick_obj, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed)
-                    if brick_hit:
+                    if self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed):
                         break
 
                 # hit brick from left side
                 if not blocking_alive[1]:
-                    brick_hit = self.change_speed_upon_brick_collide(brick_obj, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1)
-                    if brick_hit:
+                    if self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1):
                         break
 
                 # hit brick from above
                 if not blocking_alive[2]:
-                    brick_hit = self.change_speed_upon_brick_collide(brick_obj, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed) 
-                    if brick_hit:
+                    if self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed): 
                         break
 
                 # hit brick from right side
                 if not blocking_alive[3]:
-                    brick_hit = self.change_speed_upon_brick_collide(brick_obj, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1)
-                    if brick_hit:
+                    if self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1):
                         break
-
-            if brick_hit:
-                if brick_obj.health < 3:
-                    brick_obj.health -= 1
-                if brick_obj.health == 0:
-                    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
-                    brick_obj.is_alive = False
-                    all_bricks.pop(i)
-                else:
-                    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
-                brick_obj.generate_powerup(all_powerups)
 
         # collision with walls
         if self.y < 5:
             if self.velocity[1] < 0: # prevents getting stuck out of bounds
                 self.velocity = (self.velocity[0], -self.velocity[1])
-                pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
+                play_sound("wall")
         
         if self.bottom > player_init_y + 20:
             return "dead"
@@ -220,18 +214,18 @@ class ball():
         if not 10 <= self.x <= screen_x - 10:
             if self.x < 5:
                 if self.velocity[0] < 0: # prevents getting stuck out of bounds
-                    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
+                    play_sound("wall")
                     self.velocity = (-self.velocity[0], self.velocity[1])
             
             if self.right > screen_x - 5:
                 if self.velocity[0] > 0: # prevents getting stuck out of bounds
-                    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
+                    play_sound("wall")
                     self.velocity = (-self.velocity[0], self.velocity[1])
 
         return
 
 class brick():
-    def __init__(self,x,y,width,height,health,is_alive):
+    def __init__(self, x, y, width, height, health, is_alive):
         self.x = x
         self.y = y
         self.width = width
@@ -247,7 +241,7 @@ class brick():
         self.image = pg.image.load(f'{assets_path}/{default_image}').convert_alpha()
         self.image_cracked = pg.image.load(f'{assets_path}/brick_h1.png').convert_alpha()
         self.image_rect = self.image.get_rect(topleft=(self.x, self.y))
-        self.image_cracked_rect = self.image_cracked.get_rect(topleft=(self.x,self.y))
+        self.image_cracked_rect = self.image_cracked.get_rect(topleft=(self.x, self.y))
         return
 
     def draw_brick_sprite(self):
@@ -257,20 +251,19 @@ class brick():
         screen.blit(self.image, (self.x, self.y))
         return
 
-    def generate_powerup(self,all_powerups):
-        # pos = (int(self.x + (self.width/4)), int(self.y + (self.height/4)))
+    def generate_powerup(self, all_powerups):
         pos = (self.x, self.y)
-        generate_powerup = random.randint(0,2)
+        generate_powerup = random.randint(0, 2)
         # generate_powerup = 0
         if generate_powerup == 0 and self.health < 3:
-            power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0,len(all_powerup_types.keys())-1)]][0]
+            power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0, len(all_powerup_types.keys()) - 1)]][0]
             # power_type = 'laser'
-            power_up = powerup(pos[0],pos[1],True,power_type)
+            power_up = powerup(pos[0], pos[1], True, power_type)
             all_powerups.append(power_up)
         return
 
 class powerup():
-    def __init__(self,x,y,is_alive,power_type):
+    def __init__(self, x, y, is_alive, power_type):
         self.speed = 3
         self.x = x
         self.y = y
@@ -287,78 +280,63 @@ class powerup():
         screen.blit(self.image, (self.x, self.y))
         return
     
-    def check_collisions(self,player,old_balls_list,all_powerups):
+    def check_collisions(self, player, old_balls_list, all_powerups):
         new_balls_list = []
         if self.y > player_init_y - 20:
             if (self.x + self.width) >= player.x and self.x <= (player.x + player.width):
-                
-                # old parameter values
-                p_x_store = player.x
-                p_y_store = player.y
-                p_w_store = player.width
-                p_l_store = player.lives
-
-                b_x_store = [i.x for i in old_balls_list]
-                b_y_store = [i.y for i in old_balls_list]
-                b_v_store = [i.velocity for i in old_balls_list]
-                b_pass_store = [i.passthrough for i in old_balls_list]
-                b_v_mag_store = [math.sqrt(i[0]**2 + i[1]**2) for i in b_v_store]
+            
+                # ball velocity magnitude
+                b_v_mag_store = [math.sqrt(i[0]**2 + i[1]**2) for i in [ball_obj.velocity for ball_obj in old_balls_list]]
 
                 # powerups changing paddle properties
                 if self.power_type == 'paddle_size_up':
-                    width_delta = abs(p_w_store - all_widths[all_widths.index(player.width) + 1]) if p_w_store != player_long else 0
-                    new_x = p_x_store - width_delta/2
-                    new_width = p_w_store + width_delta
-                    player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=p_l_store)
+                    width_delta = abs(player.width - all_widths[all_widths.index(player.width) + 1]) if player.width != player_long else 0
+                    new_x = player.x - width_delta/2
+                    new_width = player.width + width_delta
+                    player = paddle(x=new_x, y=player.y, width=new_width, powerups=player.powerups, lives=player.lives)
                     new_balls_list = old_balls_list
+
                 elif self.power_type == 'paddle_size_down':
-                    width_delta = abs(p_w_store - all_widths[all_widths.index(player.width) - 1]) if p_w_store != player_short else 0
-                    new_x = p_x_store + width_delta/2
-                    new_width = p_w_store - width_delta
-                    player = paddle(x=new_x, y=p_y_store, width=new_width, powerups=player.powerups, lives=p_l_store)
+                    width_delta = abs(player.width - all_widths[all_widths.index(player.width) - 1]) if player.width != player_short else 0
+                    new_x = player.x + width_delta/2
+                    new_width = player.width - width_delta
+                    player = paddle(x=new_x, y=player.y, width=new_width, powerups=player.powerups, lives=player.lives)
                     new_balls_list = old_balls_list
+
                 elif self.power_type == 'paddle_speed':
-                    powerups = [i for i in player.powerups if i != "paddle_speed"]
-                    powerups.append("paddle_speed")
-                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=p_l_store)
+                    update_powerups("paddle_speed", player)
                     new_balls_list = old_balls_list
+
                 elif self.power_type == 'laser':
                     with open(f'{assets_path}/got_laser.txt', 'w') as f:
                         f.write(f'{time.time()}')
-                    powerups = [i for i in player.powerups if i != "laser"]
-                    powerups.append("laser")
-                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=p_l_store)
+                    update_powerups("laser", player)
                     new_balls_list = old_balls_list
-                elif self.power_type == 'extra_life':
-                    powerups = [i for i in player.powerups if i != 'extra_life']
-                    powerups.append('extra_life')
-                    player = paddle(x=p_x_store, y=p_y_store, width=p_w_store, powerups=powerups, lives=p_l_store + 1)
+
+                elif self.power_type == 'extra_life':                   
+                    player.lives += 1
                     new_balls_list = old_balls_list
 
                 # powerups changing ball properties
                 # even though we're considering the ball here, still store powerups in the player object
                 elif self.power_type == 'ball_speed':
                     for k, ball_obj in enumerate(old_balls_list):
-                        new_velocity = (math.sqrt(162/98)*b_v_store[k][0], math.sqrt(162/98)*b_v_store[k][1]) if abs(b_v_mag_store[k]**2 - 98) < 1 else b_v_store[k]
-                        ball_obj = ball(x=b_x_store[k], y=b_y_store[k], velocity=new_velocity, passthrough=b_pass_store[k])
+                        new_velocity = (math.sqrt(162/98)*ball_obj.velocity[0], math.sqrt(162/98)*ball_obj.velocity[1]) if abs(b_v_mag_store[k]**2 - 98) < 1 else ball_obj.velocity
+                        ball_obj = ball(x=ball_obj.x, y=ball_obj.y, velocity=new_velocity, passthrough=ball_obj.passthrough)
                         new_balls_list.append(ball_obj)
-                    powerups = [i for i in player.powerups if i != "ball_speed"]
-                    powerups.append("ball_speed")
-                    player.powerups = powerups
+                    update_powerups("ball_speed", player)
 
                 elif self.power_type == 'ball_pass_through':
                     for k, ball_obj in enumerate(old_balls_list):
-                        ball_obj = ball(x=b_x_store[k], y=b_y_store[k], velocity=b_v_store[k], passthrough=True)            
+                        ball_obj = ball(x=ball_obj.x, y=ball_obj.y, velocity=ball_obj.velocity, passthrough=True)            
                         new_balls_list.append(ball_obj)
-                    powerups = [i for i in player.powerups if i != "ball_pass_through"]
-                    powerups.append("ball_pass_through")
-                    player.powerups = powerups 
+                    update_powerups("ball_pass_through", player) 
 
                 elif self.power_type == 'multi':
 
                     for k, ball_obj in enumerate(old_balls_list):
-                        vx_dir, vy_dir = b_v_store[k][0]/abs(b_v_store[k][0]), b_v_store[k][1]/abs(b_v_store[k][1])
-                        angle = np.arccos(b_v_store[k][0]/b_v_mag_store[k])
+                        vx_dir, vy_dir = ball_obj.velocity[0]/abs(ball_obj.velocity[0]), ball_obj.velocity[1]/abs(ball_obj.velocity[1])
+                        angle = np.arccos(ball_obj.velocity[0]/b_v_mag_store[k])
                         new_balls_list.append(ball_obj)
 
                         for angle in [angle - np.pi/6, angle + np.pi/3]:
@@ -372,12 +350,10 @@ class powerup():
                                 vy = vy/abs(vy) # set the velocity component to 1 if it's less than 1
                                 vx = (vx/abs(vx)) * (math.sqrt(b_v_mag_store[k]**2 - 0))
           
-                            ball_obj1 = ball(x=b_x_store[k], y=b_y_store[k], velocity=(vx,vy), passthrough=b_pass_store[k])
+                            ball_obj1 = ball(x=ball_obj.x, y=ball_obj.y, velocity=(vx,vy), passthrough=ball_obj.passthrough)
                             new_balls_list.append(ball_obj1)
                     
-                    powerups = [i for i in player.powerups if i != "multi"]
-                    powerups.append("multi")
-                    player.powerups = powerups
+                    update_powerups("multi", player)
         
             else: # player didn't grab powerup
                 for ball_obj in old_balls_list:
@@ -393,7 +369,7 @@ class powerup():
         return player, new_balls_list
 
 class laser():
-    def __init__(self,x,y):
+    def __init__(self, x, y):
         self.x = x
         self.y = y
         self.speed = -20
@@ -408,7 +384,7 @@ class laser():
         self.y += self.speed
         return
     
-    def check_collision(self,all_bricks,all_powerups,max_brick_y):
+    def check_collision(self, all_bricks, all_powerups, max_brick_y):
         if self.y > max_brick_y + 20:
             return
         bricks_hit = 0
@@ -420,10 +396,18 @@ class laser():
                         bricks_hit = 1
                         brick_obj.health -= 1
                         if brick_obj.health == 0:
-                            pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/smash.wav"))
+                            play_sound("smash")
                             brick_obj.is_alive = False
                             brick_obj.generate_powerup(all_powerups)
                             all_bricks.pop(i)
                         else:
-                            pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
+                            play_sound("wall")
                         return "dead"
+
+def play_sound(sound):
+    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/{sound}.wav"))
+
+def update_powerups(powerup, player):
+    player.powerups.append(powerup)
+    player.powerups = list(set(player.powerups))
+    return
