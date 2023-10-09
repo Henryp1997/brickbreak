@@ -6,7 +6,7 @@ def generate_brick_coords(level):
     if level == -1:
         # debug level
         brick_coords = []
-        brick_coords.append((400, 400, 470, 430, 'h3'))
+        brick_coords.append((400, 400, 470, 430, 3))
     if level == 0:
         brick_coords = []
         y_start = 80
@@ -14,7 +14,7 @@ def generate_brick_coords(level):
         n_rows = 3
         for y in range(y_start, y_start + brick_default_height*(n_rows), brick_default_height):
             for x in range(x_start, x_start + 700, brick_default_width):
-                brick_coords.append([x, y, x + brick_default_width, y + brick_default_height, 'h1']) # left, top, right, bottom
+                brick_coords.append([x, y, x + brick_default_width, y + brick_default_height, 1]) # left, top, right, bottom
     if level == 1:
         brick_coords = []
         y_start = 60
@@ -36,9 +36,9 @@ def generate_brick_coords(level):
         
         for coords in brick_coords:
             if coords[0] == l[1] or coords[0] == l[2]:
-                coords.append('h2')
+                coords.append(2)
             else:
-                coords.append('h1')
+                coords.append(1)
 
     max_brick_y = max([i[3] for i in brick_coords])
     return brick_coords, brick_default_width, brick_default_height, max_brick_y

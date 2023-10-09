@@ -159,6 +159,7 @@ def start_game():
                     laser_bolt = player.check_keys(all_lasers, frame_count)
                     if laser_bolt is not None:
                         all_lasers.append((laser_bolt, frame_count))
+
                     # move ball
                     for ball_obj in all_balls:
                         ball_obj.draw_ball()
@@ -191,12 +192,12 @@ def start_game():
                                 all_lasers.pop(i)
                             
                     if len(all_balls) == 1 and 'multi' in player.powerups:
-                        player.powerups = [i for i in player.powerups if i != 'multi']
+                        player.powerups.pop(player.powerups.index("multi"))
 
                     for power_up in all_powerups:
                         if power_up.is_alive:
                             power_up.update_position()
-                            player, all_balls = power_up.check_collisions(player,all_balls,all_powerups)
+                            player, all_balls = power_up.check_collisions(player, all_balls, all_powerups)
 
             if player.width != width_memory or player.powerups != powerups_memory or player.lives != lives_memory:
                 draw_info_bar(player.lives, player.powerups, player.width)

@@ -59,8 +59,6 @@ class ball():
         self.x = x
         self.y = y
         self.passthrough = passthrough
-        self.right = self.x + self.height # width and height the same because it's a square
-        self.bottom = self.y + self.height
         self.image = pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha()
         self.unstop_image = pg.image.load(f'{assets_path}/player_sprites/ball_unstop.png').convert_alpha()
         return
@@ -68,8 +66,6 @@ class ball():
     def move(self):
         self.x += self.velocity[0]
         self.y += self.velocity[1]
-        self.right += self.velocity[0]
-        self.bottom += self.velocity[1]
         return
 
     def draw_ball(self):
@@ -85,10 +81,10 @@ class ball():
     def change_speed_upon_brick_collide(self, brick_obj, all_bricks, all_powerups, brick_boundaries, direction, dont_change_ball_speed, negate_speed_x, negate_speed_y):
         # coords to check boundaries
         coords = (
-            (self.y, self.right, self.x),
-            (self.right, self.bottom, self.y),
-            (self.bottom, self.right, self.x),
-            (self.x, self.bottom, self.y)
+            (self.y, self.x + self.height, self.x),
+            (self.x + self.height, self.y + self.height, self.y),
+            (self.y + self.height, self.x + self.height, self.x),
+            (self.x, self.y + self.height, self.y)
         )
         # speeds to check direction of ball
         speeds = (
@@ -126,7 +122,7 @@ class ball():
         ball_velocity_magnitude = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
 
         # collision with paddle
-        if abs(self.bottom - player.y) < 10:
+        if abs(self.y + self.height - player.y) < 10:
             # calculate what the angle of reflection should be when hitting the paddle
             # this should vary from 90 deg if the ball hits the centre to almost zero if the ball hits the edges
             relative_x = self.x - player.x + self.height
@@ -151,7 +147,7 @@ class ball():
                         return
 
         # collision with brick
-        if not (self.y > max_brick_y + 20):
+        if self.y < max_brick_y + 20:
             bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < 1.25*brick_default_width]
             all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in bricks_to_check]
 
@@ -208,7 +204,7 @@ class ball():
                 self.velocity = (self.velocity[0], -self.velocity[1])
                 play_sound("wall")
         
-        if self.bottom > player_init_y + 20:
+        if self.y + self.height > player_init_y + 20:
             return "dead"
 
         if not 10 <= self.x <= screen_x - 10:
@@ -230,7 +226,7 @@ class brick():
         self.y = y
         self.width = width
         self.height = height
-        self.health = int(health.split('h')[1])
+        self.health = health
         self.is_alive = is_alive
         if self.health == 3:
             default_image = 'brick_h3.png'
