@@ -213,7 +213,7 @@ class ball():
                     play_sound("wall")
                     self.velocity = (-self.velocity[0], self.velocity[1])
             
-            if self.right > screen_x - 5:
+            if self.x + self.height > screen_x - 5:
                 if self.velocity[0] > 0: # prevents getting stuck out of bounds
                     play_sound("wall")
                     self.velocity = (-self.velocity[0], self.velocity[1])

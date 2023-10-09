@@ -106,7 +106,7 @@ def start_game():
                 if len(all_bricks) == 0:
                     if levels_cleared != 0:
                         level += 1
-                    levels_cleared += 1
+                        levels_cleared += 1
                     generate_level = True
                     begin = False
                 else:
