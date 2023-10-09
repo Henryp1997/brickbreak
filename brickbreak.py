@@ -14,14 +14,14 @@ def generate_brick_coords(level):
     if level == -1:
         # debug level
         brick_coords = []
-        brick_coords.append((400,400,470,430,'h3'))
+        brick_coords.append((400, 400, 470, 430, 'h3'))
     if level == 0:
         brick_coords = []
         y_start = 80
         x_start = round((screen_x - 700)/2)
         n_rows = 3
-        for y in range(y_start,y_start + brick_default_height*(n_rows),brick_default_height):
-            for x in range(x_start,x_start+700,brick_default_width):
+        for y in range(y_start, y_start + brick_default_height*(n_rows), brick_default_height):
+            for x in range(x_start, x_start + 700, brick_default_width):
                 brick_coords.append([x, y, x + brick_default_width, y + brick_default_height, 'h1']) # left, top, right, bottom
     if level == 1:
         brick_coords = []
@@ -29,12 +29,12 @@ def generate_brick_coords(level):
         x_start = round((screen_x - 700)/4)
         x_start_from_right = screen_x - x_start - brick_default_width
         n_rows = 10
-        for y in range(y_start,y_start + brick_default_height*(n_rows),brick_default_height):
-            for i, x in enumerate(range(x_start,x_start+175,brick_default_width)):
+        for y in range(y_start, y_start + brick_default_height*(n_rows), brick_default_height):
+            for i, x in enumerate(range(x_start, x_start + 175, brick_default_width)):
                 if i == 0:
                     continue
                 brick_coords.append([x, y, x + brick_default_width, y + brick_default_height]) # left, top, right, bottom
-            for i, x in enumerate(range(x_start_from_right,x_start_from_right-175,-brick_default_width)):
+            for i, x in enumerate(range(x_start_from_right, x_start_from_right - 175, -brick_default_width)):
                 if i == 0:
                     continue
                 brick_coords.append([x, y, x + brick_default_width, y + brick_default_height]) # left, top, right, bottom
@@ -65,7 +65,7 @@ def draw_game_over_screen():
     screen.blit(font.render('Press Esc to restart', True, colours['RED']), text2_pos)
     return
 
-def draw_info_bar(lives,player_powerups,player_width):
+def draw_info_bar(lives, player_powerups, player_width):
     pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,info_bar_start),(screen_x,screen_y - info_bar_start)),width=5)
     font = pg.font.SysFont('Arial', 30)
     screen.blit(font.render(f'Lives:', True, colours['RED']), (round(screen_x*0.02), info_bar_start + round(screen_x*0.02)))
@@ -94,7 +94,7 @@ def draw_info_bar(lives,player_powerups,player_width):
 
 initialise_everything = True
 frame_count = 0
-frames = [0,0]
+frames = [0, 0]
 got_laser = False
 levels_cleared = 0
 # game code
@@ -111,7 +111,7 @@ while True:
         all_powerups = []
 
         player = objects.paddle(x=player_init_x, y=player_init_y, width=player_default_width, powerups=[], lives=3)
-        ball_obj = objects.ball(x=ball_init_pos[level][0],y=ball_init_pos[level][1],velocity=ball_init_velocity,passthrough=False)
+        ball_obj = objects.ball(x=ball_init_pos[level][0], y=ball_init_pos[level][1], velocity=ball_init_velocity, passthrough=False)
 
         powerups_memory = player.powerups
         width_memory = player.width
@@ -124,11 +124,7 @@ while True:
         begin = False
         start_or_retry = 'start'
 
-        use_toshiba = False
-        group = pg.sprite.RenderPlain()
-        group.add(player)
-
-        draw_info_bar(player.lives,player.powerups,player.width)
+        draw_info_bar(player.lives, player.powerups, player.width)
 
         pg.display.update()
 
@@ -162,15 +158,12 @@ while True:
             if generate_level:
                 all_balls = []
                 brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
-                [all_bricks.append(objects.brick(coords[0],coords[1],width=brick_default_width,height=brick_default_height,health=coords[4],is_alive=True)) for coords in brick_coords]
-                ball_obj = objects.ball(x=ball_init_pos[level][0],y=ball_init_pos[level][1],velocity=ball_init_velocity,passthrough=False)
+                [all_bricks.append(objects.brick(coords[0], coords[1], width=brick_default_width, height=brick_default_height, health=coords[4], is_alive=True)) for coords in brick_coords]
+                ball_obj = objects.ball(x=ball_init_pos[level][0], y=ball_init_pos[level][1], velocity=ball_init_velocity, passthrough=False)
                 all_balls.append(ball_obj)
                 generate_level = False
 
-            if use_toshiba:
-                group.draw(screen)
-            else:
-                player.draw_paddle()
+            player.draw_paddle()
 
             if not begin:
                 all_powerups = []
@@ -205,14 +198,14 @@ while True:
                         player.powerups = [pwr for pwr in player.powerups if pwr != 'laser']
 
                 # move paddle and check for spacebar presses for laser bolts
-                laser_bolt = player.check_keys(all_lasers,frame_count)
+                laser_bolt = player.check_keys(all_lasers, frame_count)
                 if laser_bolt is not None:
                     all_lasers.append((laser_bolt, frame_count))
                 # move ball
                 for ball_obj in all_balls:
                     ball_obj.draw_ball()
                     ball_obj.move()
-                    dead = ball_obj.check_collision(player,all_bricks,all_powerups,max_brick_y)
+                    dead = ball_obj.check_collision(player, all_bricks, all_powerups, max_brick_y)
                     if dead == "dead":
                         all_balls.pop(all_balls.index(ball_obj))
                     if len(all_balls) == 0:
@@ -235,7 +228,7 @@ while True:
                     for i, bolt in enumerate(bolt_objects):
                         bolt.draw_laser()
                         bolt.move()
-                        dead = bolt.check_collision(all_bricks,all_powerups,max_brick_y)
+                        dead = bolt.check_collision(all_bricks, all_powerups, max_brick_y)
                         if dead == "dead":
                             all_lasers.pop(i)
                         
@@ -248,10 +241,10 @@ while True:
                         player, all_balls = power_up.check_collisions(player,all_balls,all_powerups)
 
         if player.width != width_memory or player.powerups != powerups_memory or player.lives != lives_memory:
-            draw_info_bar(player.lives,player.powerups,player.width)
+            draw_info_bar(player.lives, player.powerups, player.width)
             pg.display.update()
         else:
-            pg.display.update((0,0,screen_x,info_bar_start))
+            pg.display.update((0, 0, screen_x, info_bar_start))
 
         powerups_memory = player.powerups
         width_memory = player.width

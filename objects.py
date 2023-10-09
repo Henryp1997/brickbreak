@@ -84,13 +84,41 @@ class ball():
         screen.blit(img, (self.x, self.y))
         return
         
+    def change_speed_upon_brick_collide(self, brick_obj, brick_boundaries, direction, dont_change_ball_speed, negate_speed_x, negate_speed_y):
+        # coords to check boundaries
+        coords = (
+            (self.y, self.right, self.x),
+            (self.right, self.bottom, self.y),
+            (self.bottom, self.right, self.x),
+            (self.x, self.bottom, self.y)
+        )
+        # speeds to check direction of ball
+        speeds = (
+            (self.velocity[1]),
+            (-self.velocity[0]),
+            (-self.velocity[1]),
+            (self.velocity[0])
+        )
+        brick_hit = False
+        if abs(coords[direction][0] - brick_boundaries[0]) < 10:
+            if brick_boundaries[1] <= coords[direction][1] and coords[direction][2] <= brick_boundaries[2]:
+                if speeds[direction] < 0:
+                    if not dont_change_ball_speed:
+                        if direction in [0, 2]:
+                            if negate_speed_y == 1 and brick_obj.health > 1:
+                                negate_speed_y *= -1
+                        elif direction in [1, 3]:
+                            if negate_speed_x == 1 and brick_obj.health > 1:
+                                negate_speed_x *= -1
+                        self.velocity = (negate_speed_x*self.velocity[0], negate_speed_y*self.velocity[1])
+                    brick_hit = True 
+        return brick_hit
+
     def check_collision(self,player,all_bricks,all_powerups,max_brick_y):
-        ball_right = self.x + self.height
-        ball_bottom = self.y + self.height
         ball_velocity_magnitude = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
 
         # collision with paddle
-        if abs(ball_bottom - player.y) < 10:
+        if abs(self.bottom - player.y) < 10:
             # calculate what the angle of reflection should be when hitting the paddle
             # this should vary from 90 deg if the ball hits the centre to almost zero if the ball hits the edges
             relative_x = self.x - player.x + self.height
@@ -128,61 +156,46 @@ class ball():
                 if len(all_bricks) == 1:
                     if all_bricks[0].health < 3: # only change this variable if the brick is destructable (i.e., health 1 or 2)
                         dont_change_ball_speed = True # this variable prevents bugs when the ball is carried through to a new level
-                l, r, t, b = (brick_obj.x, brick_obj.x + brick_default_width, brick_obj.y, brick_obj.y + brick_default_height) # left, right, top and bottom coords of the brick
 
-                l_alive = True if (l-brick_default_width, t) in all_bricks_coords else False
-                r_alive = True if (r, t) in all_bricks_coords else False
-                t_alive = True if (l, t-brick_default_height) in all_bricks_coords else False
-                b_alive = True if (l, b) in all_bricks_coords else False
+                # left, right, top and bottom coords of the brick
+                l, r, t, b = (
+                    brick_obj.x, 
+                    brick_obj.x + brick_default_width, 
+                    brick_obj.y, 
+                    brick_obj.y + brick_default_height
+                )
+
+                # check whether there is a brick blocking the current one
+                blocking_alive = (
+                    True if (l, b) in all_bricks_coords else False,
+                    True if (l - brick_default_width, t) in all_bricks_coords else False,
+                    True if (l, t-brick_default_height) in all_bricks_coords else False,
+                    True if (r, t) in all_bricks_coords else False,
+                )
 
                 # hit brick from below
-                if not b_alive:
-                    if abs(int(self.y) - b) < 10:
-                        if l <= ball_right and self.x <= r:
-                            if self.velocity[1] < 0:
-                                if not dont_change_ball_speed:
-                                    if negate_speed == 1 and brick_obj.health > 1:
-                                        negate_speed *= -1
-                                    print(self.velocity)
-                                    self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
-                                brick_hit = True 
-                                break
+                if not blocking_alive[0]:
+                    brick_hit = self.change_speed_upon_brick_collide(brick_obj, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed)
+                    if brick_hit:
+                        break
 
                 # hit brick from left side
-                if not l_alive:
-                    if abs(int(ball_right) - l) < 10:
-                        if t <= ball_bottom and self.y <= b:
-                            if self.velocity[0] > 0:
-                                if not dont_change_ball_speed:
-                                    if negate_speed == 1 and brick_obj.health > 1:
-                                        negate_speed *= -1
-                                    self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
-                                brick_hit = True 
-                                break
-                
+                if not blocking_alive[1]:
+                    brick_hit = self.change_speed_upon_brick_collide(brick_obj, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1)
+                    if brick_hit:
+                        break
+
                 # hit brick from above
-                if not t_alive:
-                    if abs(int(ball_bottom) - t) < 10:
-                        if l <= ball_right and self.x <= r:
-                            if self.velocity[1] > 0:
-                                if not dont_change_ball_speed:
-                                    if negate_speed == 1 and brick_obj.health > 1:
-                                        negate_speed *= -1
-                                    self.velocity = (self.velocity[0], negate_speed*self.velocity[1])
-                                brick_hit = True 
-                                break
+                if not blocking_alive[2]:
+                    brick_hit = self.change_speed_upon_brick_collide(brick_obj, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed) 
+                    if brick_hit:
+                        break
 
                 # hit brick from right side
-                if not r_alive:
-                    if abs(int(self.x) - r) < 10: 
-                        if t <= ball_bottom and self.y <= b:
-                            if self.velocity[0] < 0:
-                                if not dont_change_ball_speed:
-                                    if negate_speed == 1 and brick_obj.health > 1:
-                                        negate_speed *= -1
-                                    self.velocity = (negate_speed*self.velocity[0], self.velocity[1])
-                                brick_hit = True      
-                                break       
+                if not blocking_alive[3]:
+                    brick_hit = self.change_speed_upon_brick_collide(brick_obj, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1)
+                    if brick_hit:
+                        break
 
             if brick_hit:
                 if brick_obj.health < 3:
@@ -201,7 +214,7 @@ class ball():
                 self.velocity = (self.velocity[0], -self.velocity[1])
                 pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
         
-        if ball_bottom > player_init_y + 20:
+        if self.bottom > player_init_y + 20:
             return "dead"
 
         if not 10 <= self.x <= screen_x - 10:
@@ -210,7 +223,7 @@ class ball():
                     pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
                     self.velocity = (-self.velocity[0], self.velocity[1])
             
-            if ball_right > screen_x - 5:
+            if self.right > screen_x - 5:
                 if self.velocity[0] > 0: # prevents getting stuck out of bounds
                     pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/wall.wav"))
                     self.velocity = (-self.velocity[0], self.velocity[1])
