@@ -228,12 +228,7 @@ class brick():
         self.height = height
         self.health = health
         self.is_alive = is_alive
-        if self.health == 3:
-            default_image = 'brick_h3.png'
-        elif self.health == 2:
-            default_image = 'brick_h2.png'
-        else:
-            default_image = 'brick_h1.png'
+        default_image = f'brick_h{self.health}.png'
         self.image = pg.image.load(f'{assets_path}/{default_image}').convert_alpha()
         self.image_cracked = pg.image.load(f'{assets_path}/brick_h1.png').convert_alpha()
         self.image_rect = self.image.get_rect(topleft=(self.x, self.y))
@@ -253,7 +248,7 @@ class brick():
         # generate_powerup = 0
         if generate_powerup == 0 and self.health < 3:
             power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0, len(all_powerup_types.keys()) - 1)]][0]
-            # power_type = 'laser'
+            # power_type = 'multi'
             power_up = powerup(pos[0], pos[1], True, power_type)
             all_powerups.append(power_up)
         return
@@ -331,24 +326,23 @@ class powerup():
                 elif self.power_type == 'multi':
 
                     for k, ball_obj in enumerate(old_balls_list):
-                        vx_dir, vy_dir = ball_obj.velocity[0]/abs(ball_obj.velocity[0]), ball_obj.velocity[1]/abs(ball_obj.velocity[1])
-                        angle = np.arccos(ball_obj.velocity[0]/b_v_mag_store[k])
                         new_balls_list.append(ball_obj)
 
-                        for angle in [angle - np.pi/6, angle + np.pi/3]:
-                            angle1 = angle - np.pi/6
-                            vx, vy = abs(b_v_mag_store[k]*(np.cos(angle1)))*vx_dir, abs(b_v_mag_store[k]*(np.sin(angle1)))*vy_dir
-                            if abs(vx) < 1:
-                                vx = vx/abs(vx) # set the velocity component to 1 if it's less than 1
-                                vy = (vy/abs(vy)) * (math.sqrt(b_v_mag_store[k]**2 - 1))
+                        theta = calculate_ball_angle(ball_obj.velocity)
 
-                            elif abs(vy) < 1:
-                                vy = vy/abs(vy) # set the velocity component to 1 if it's less than 1
-                                vx = (vx/abs(vx)) * (math.sqrt(b_v_mag_store[k]**2 - 0))
-          
-                            ball_obj1 = ball(x=ball_obj.x, y=ball_obj.y, velocity=(vx,vy), passthrough=ball_obj.passthrough)
-                            new_balls_list.append(ball_obj1)
-                    
+                        for i, angle in enumerate((theta - np.pi/6, theta + np.pi/6)):
+                            if i == 0:
+                                if angle < 0:
+                                    angle = 11*np.pi/6 - theta
+                            elif i == 1:
+                                if angle > 2*np.pi:
+                                    angle -= 2*np.pi
+
+                            # need to negate vy since down is positive and up is negative
+                            vx, vy = b_v_mag_store[k] * np.cos(angle), - b_v_mag_store[k] * np.sin(angle)
+                            new_ball = ball(x=ball_obj.x, y=ball_obj.y, velocity=(vx, vy), passthrough=ball_obj.passthrough)
+                            new_balls_list.append(new_ball)
+   
                     update_powerups("multi", player)
         
             else: # player didn't grab powerup
@@ -363,6 +357,30 @@ class powerup():
                 new_balls_list.append(ball_obj)
 
         return player, new_balls_list
+
+def calculate_ball_angle(vel):
+    vx, vy = vel
+    try:
+        # upper right quadrant
+        if vx > 0 and vy <= 0:
+            theta = np.arctan(-vy / vx)
+        # upper left quadrant
+        elif vx < 0 and vy <= 0:
+            theta = np.pi + np.arctan(-vy / vx)
+        # lower left quadrant
+        elif vx < 0 and vy > 0:
+            theta = np.pi + np.arctan(-vy / vx)
+        # lower right quadrant
+        elif vx > 0 and vy > 0:
+            theta = 2*np.pi + np.arctan(-vy / vx)
+
+    except ZeroDivisionError:
+        if vy < 0:
+            theta = np.pi/2
+        else:
+            theta = 3*np.pi/2
+    
+    return theta
 
 class laser():
     def __init__(self, x, y):
