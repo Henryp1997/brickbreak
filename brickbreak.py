@@ -54,7 +54,6 @@ def start_game():
     initialise_everything = True
     frame_count = 0
     frames = [0, 0]
-    levels_cleared = -1
     # game code
     while True:
         clock = pg.time.Clock()
@@ -63,6 +62,7 @@ def start_game():
         screen.fill(colours['BLACK'])
         
         if initialise_everything:
+            levels_cleared = 0
             level = 0
             all_lasers = []
             all_bricks = []
@@ -95,12 +95,12 @@ def start_game():
         
         elif not initialise_everything:
             if game_over:
-                pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start + round(screen_x*0.002))),width=5)
+                pg.draw.rect(screen, colours['GREY2'], pg.Rect((0, 0),(screen_x, info_bar_start + round(screen_x*0.002))), width=5)
                 draw_game_over_screen()
 
             elif not game_over:
 
-                pg.draw.rect(screen, colours['GREY2'], pg.Rect((0,0),(screen_x,info_bar_start + round(screen_x*0.002))),width=5)
+                pg.draw.rect(screen, colours['GREY2'], pg.Rect((0, 0),(screen_x, info_bar_start + round(screen_x*0.002))), width=5)
 
                 if len(all_bricks) == 0:
                     if levels_cleared > 0:
