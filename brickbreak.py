@@ -34,17 +34,18 @@ def draw_info_bar(lives, player_powerups, player_width):
 
     font = pg.font.SysFont('Arial', 15)
     for i, j in enumerate(list(all_powerup_types.keys())):
-        if all_powerup_types[j][0] != 'extra_life':
+        power_name = all_powerup_types[j][0]
+        if power_name != 'extra_life':
             col = colours['GREY1']
-            if 'paddle_size' in all_powerup_types[j][0]:
+            if 'paddle_size' in power_name:
                 if player_width == player_default_width:
                     col = colours['GREY1']
-                elif 'up' in all_powerup_types[j][0] and player_width == player_long:
+                elif 'up' in power_name and player_width == player_long:
                     col = colours['RED']
-                elif 'down' in all_powerup_types[j][0] and player_width == player_short:
+                elif 'down' in power_name and player_width == player_short:
                     col = colours['RED']
             else:
-                if all_powerup_types[j][0] in player_powerups:
+                if power_name in player_powerups:
                     col = colours['RED']
                 else:
                     col = colours['GREY1']
@@ -63,7 +64,7 @@ def start_game():
         
         if initialise_everything:
             levels_cleared = 0
-            level = 0
+            level = -1
             all_lasers = []
             all_bricks = []
             all_powerups = []
@@ -105,6 +106,7 @@ def start_game():
                 if len(all_bricks) == 0:
                     if levels_cleared > 0:
                         level += 1
+                        start_or_retry = 'start'
                     levels_cleared += 1
                     generate_level = True
                     begin = False
@@ -116,8 +118,22 @@ def start_game():
                 if generate_level:
                     all_balls = []
                     brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
-                    [all_bricks.append(objects.brick(coords[0], coords[1], width=brick_default_width, height=brick_default_height, health=coords[4], is_alive=True)) for coords in brick_coords]
-                    ball_obj = objects.ball(x=ball_init_pos[level][0], y=ball_init_pos[level][1], velocity=ball_init_velocity, passthrough=False)
+                    all_bricks = [
+                        objects.brick(
+                            coords[0], 
+                            coords[1], 
+                            width=brick_default_width, 
+                            height=brick_default_height, 
+                            health=coords[4], 
+                            is_alive=True
+                        ) for coords in brick_coords
+                    ]
+                    ball_obj = objects.ball(
+                        x=ball_init_pos[level][0], 
+                        y=ball_init_pos[level][1], 
+                        velocity=ball_init_velocity, 
+                        passthrough=False
+                    )
                     all_balls.append(ball_obj)
                     generate_level = False
 
@@ -127,9 +143,18 @@ def start_game():
                     all_powerups = []
                     width_memory = player.width
                     new_x = player_init_x
-                    player = objects.paddle(x=new_x, y=player_init_y, width=width_memory, powerups=[], lives=player.lives)
+                    player = objects.paddle(
+                        x=new_x, 
+                        y=player_init_y, 
+                        width=width_memory,
+                        powerups=[], 
+                        lives=player.lives
+                    )
                     draw_start_text(start_or_retry)
-                    screen.blit(pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha(), (ball_init_pos[level][0], ball_init_pos[level][1]))
+                    screen.blit(
+                        pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha(),
+                        (ball_init_pos[level][0], ball_init_pos[level][1])
+                    )
                     for event in pg.event.get():
                         if event.type == KEYDOWN and event.key == K_SPACE:
                             begin = True
@@ -211,6 +236,8 @@ def start_game():
             frames[1] = frame_count
 
             for event in pg.event.get():
+                if event.type == KEYDOWN and event.key == K_k and pg.key.get_mods() & KMOD_SHIFT:
+                    all_bricks = [all_bricks[0]]
                 if event.type == KEYDOWN and event.key == K_ESCAPE:
                     restart = True
                     game_over = False
