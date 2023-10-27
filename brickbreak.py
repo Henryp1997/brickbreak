@@ -64,7 +64,7 @@ def start_game():
         
         if initialise_everything:
             levels_cleared = 0
-            level = -1
+            level = 2
             all_lasers = []
             all_bricks = []
             all_powerups = []

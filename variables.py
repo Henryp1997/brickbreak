@@ -32,7 +32,12 @@ player_long = 225
 all_widths = [player_short,player_default_width,player_long]
 player_init_x = (screen_x-player_default_width)/2
 player_init_y = screen_y*(15/18)
-ball_init_pos = {-1: (screen_x*0.7, screen_y/3), 0: (screen_x*0.7,screen_y/3), 1: (screen_x*0.6,screen_y/3)}
+ball_init_pos = {
+    -1: (screen_x*0.7, screen_y/3),
+    0: (screen_x*0.7,screen_y/3),
+    1: (screen_x*0.6,screen_y/3),
+    2: (screen_x*0.7,screen_y/3)
+}
 ball_init_height = 10
 ball_init_velocity = (-7,7)
 laser_bolt_init_width = 5
