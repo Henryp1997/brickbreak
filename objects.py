@@ -25,11 +25,11 @@ class paddle():
     
     def check_keys(self, all_lasers, frame_count):
         key = pg.key.get_pressed()
-        if key[pg.K_LEFT]:
+        if key[pg.K_a]:
             if self.x + self.width/2 > 5:
                 self.x -= self.speed
                 self.rect.move_ip(-self.speed, 0)
-        if key[pg.K_RIGHT]:
+        if key[pg.K_d]:
             if self.x + self.width/2 < screen_x - 5:
                 self.x += self.speed
                 self.rect.move_ip(self.speed, 0)
@@ -94,7 +94,7 @@ class ball():
             (self.velocity[0])
         )
         brick_hit = False
-        if abs(coords[direction][0] - brick_boundaries[0]) < 10:
+        if abs(coords[direction][0] - brick_boundaries[0]) < 5:
             if brick_boundaries[1] <= coords[direction][1] and coords[direction][2] <= brick_boundaries[2]:
                 if speeds[direction] < 0:
                     if not dont_change_ball_speed:
