@@ -25,11 +25,11 @@ class paddle():
     
     def check_keys(self, all_lasers, frame_count):
         key = pg.key.get_pressed()
-        if key[pg.K_a]:
+        if key[pg.K_LEFT]:
             if self.x + self.width/2 > 5:
                 self.x -= self.speed
                 self.rect.move_ip(-self.speed, 0)
-        if key[pg.K_d]:
+        if key[pg.K_RIGHT]:
             if self.x + self.width/2 < screen_x - 5:
                 self.x += self.speed
                 self.rect.move_ip(self.speed, 0)
@@ -94,7 +94,7 @@ class ball():
             (self.velocity[0])
         )
         brick_hit = False
-        if abs(coords[direction][0] - brick_boundaries[0]) < 5:
+        if abs(coords[direction][0] - brick_boundaries[0]) < 10:
             if brick_boundaries[1] <= coords[direction][1] and coords[direction][2] <= brick_boundaries[2]:
                 if speeds[direction] < 0:
                     if not dont_change_ball_speed:
@@ -113,10 +113,16 @@ class ball():
                 play_sound("smash")
                 brick_obj.is_alive = False
                 all_bricks.pop(all_bricks.index(brick_obj))
+
+            if len(all_bricks) == 1:
+                locked_brick = all_bricks[0]
+                if locked_brick.health == 3:
+                    # turn the padlocked brick into a normal 2-health brick
+                    locked_brick.health -= 1
             else:
                 play_sound("wall")
             brick_obj.generate_powerup(all_powerups)
-        return brick_hit
+        return brick_hit, all_bricks
 
     def check_collision(self, player, all_bricks, all_powerups, max_brick_y):
         ball_velocity_magnitude = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
@@ -140,11 +146,11 @@ class ball():
                     if self.velocity[0] > 0:
                         play_sound("bounce")
                         self.velocity = (negate_speed*ball_velocity_magnitude*np.cos(angle), -ball_velocity_magnitude*np.sin(angle))
-                        return
+                        return None, all_bricks
                     elif self.velocity[0] < 0:
                         play_sound("bounce")
                         self.velocity = (negate_speed*ball_velocity_magnitude*np.cos(angle), -ball_velocity_magnitude*np.sin(angle))
-                        return
+                        return None, all_bricks
 
         # collision with brick
         if self.y < max_brick_y + 20:
@@ -180,22 +186,26 @@ class ball():
 
                 # hit brick from below
                 if not blocking_alive[0]:
-                    if self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed):
+                    brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed)
+                    if brick_hit:
                         break
 
                 # hit brick from left side
                 if not blocking_alive[1]:
-                    if self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1):
+                    brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1)
+                    if brick_hit:
                         break
 
                 # hit brick from above
                 if not blocking_alive[2]:
-                    if self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed): 
+                    brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed)
+                    if brick_hit: 
                         break
 
                 # hit brick from right side
                 if not blocking_alive[3]:
-                    if self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1):
+                    brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1)
+                    if brick_hit:
                         break
 
         # collision with walls
@@ -205,7 +215,7 @@ class ball():
                 play_sound("wall")
         
         if self.y + self.height > player_init_y + 20:
-            return "dead"
+            return "dead", all_bricks
 
         if not 10 <= self.x <= screen_x - 10:
             if self.x < 5:
@@ -218,7 +228,7 @@ class ball():
                     play_sound("wall")
                     self.velocity = (-self.velocity[0], self.velocity[1])
 
-        return
+        return None, all_bricks
 
 class brick():
     def __init__(self, x, y, width, height, health, is_alive):
@@ -228,18 +238,23 @@ class brick():
         self.height = height
         self.health = health
         self.is_alive = is_alive
-        default_image = f'brick_h{self.health}.png'
-        self.image = pg.image.load(f'{assets_path}/{default_image}').convert_alpha()
-        self.image_cracked = pg.image.load(f'{assets_path}/brick_h1.png').convert_alpha()
-        self.image_rect = self.image.get_rect(topleft=(self.x, self.y))
-        self.image_cracked_rect = self.image_cracked.get_rect(topleft=(self.x, self.y))
+        self.image_h3 = pg.image.load(f'{assets_path}/brick_h3.png').convert_alpha()
+        self.image_h2 = pg.image.load(f'{assets_path}/brick_h2.png').convert_alpha()
+        self.image_h1 = pg.image.load(f'{assets_path}/brick_h1.png').convert_alpha()
+        self.image_h3_rect = self.image_h3.get_rect(topleft=(self.x, self.y))
+        self.image_h2_rect = self.image_h2.get_rect(topleft=(self.x, self.y))
+        self.image_h1_rect = self.image_h1.get_rect(topleft=(self.x, self.y))
         return
 
     def draw_brick_sprite(self):
         if self.health == 1:
-            screen.blit(self.image_cracked, (self.x, self.y))
+            screen.blit(self.image_h1, (self.x, self.y))
             return
-        screen.blit(self.image, (self.x, self.y))
+        if self.health == 2:
+            screen.blit(self.image_h2, (self.x, self.y))
+            return
+        if self.health == 3:
+            screen.blit(self.image_h3, (self.x, self.y))
         return
 
     def generate_powerup(self, all_powerups):

@@ -2,8 +2,10 @@ import pygame as pg
 import os
 from win32api import GetSystemMetrics
 
-y_res = GetSystemMetrics(0)
-x_res = GetSystemMetrics(1)
+# y_res = GetSystemMetrics(0)
+# x_res = GetSystemMetrics(1)
+x_res = 1150
+y_res = int(16*x_res/9)
 screen_x = int(0.75*x_res)
 screen_y = int(screen_x*(9/10))
 
@@ -34,9 +36,9 @@ player_init_x = (screen_x-player_default_width)/2
 player_init_y = screen_y*(15/18)
 ball_init_pos = {
     -1: (screen_x*0.7, screen_y/3),
-    0: (screen_x*0.7,screen_y/3),
-    1: (screen_x*0.6,screen_y/3),
-    2: (screen_x*0.7,screen_y/3)
+    0: (screen_x*0.7, screen_y/3),
+    1: (screen_x*0.6, screen_y/3),
+    2: (screen_x*0.9, screen_y/3),
 }
 ball_init_height = 10
 ball_init_velocity = (-7,7)
@@ -58,4 +60,4 @@ all_powerup_types = {
     'Extra Life': ('extra_life',None,'life_powerup')
 }
 
-screen = pg.display.set_mode((screen_x,screen_y))
+screen = pg.display.set_mode((screen_x, screen_y))

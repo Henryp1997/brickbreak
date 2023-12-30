@@ -64,11 +64,11 @@ def start_game():
         
         if initialise_everything:
             levels_cleared = 0
-            level = 2
+            level = 0
             all_lasers = []
             all_bricks = []
             all_powerups = []
-
+            
             player = objects.paddle(x=player_init_x, y=player_init_y, width=player_default_width, powerups=[], lives=3)
             ball_obj = objects.ball(x=ball_init_pos[level][0], y=ball_init_pos[level][1], velocity=ball_init_velocity, passthrough=False)
 
@@ -188,7 +188,7 @@ def start_game():
                     for ball_obj in all_balls:
                         ball_obj.draw_ball()
                         ball_obj.move()
-                        dead = ball_obj.check_collision(player, all_bricks, all_powerups, max_brick_y)
+                        dead, all_bricks = ball_obj.check_collision(player, all_bricks, all_powerups, max_brick_y)
                         if dead == "dead":
                             all_balls.pop(all_balls.index(ball_obj))
                         if len(all_balls) == 0:

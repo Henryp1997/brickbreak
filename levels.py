@@ -39,24 +39,44 @@ def generate_brick_coords(level):
                 coords.append(1)
         
     if level == 2:
-        current_y = 60
-        start_x = round((screen_x - brick_default_width)/2)
-        for i in range(4):
+        current_y = 30
+        current_x = round((screen_x)/2)
+        reflection_offset = 10
+        for i in range(6):
             for j in range(i):
+                health = 1
+                health_reflect = 1
+                if i == 5 and j == 2:
+                    health = 3
+                if i == 5 and j in (1, 3):
+                    health = 2
+                if i == 4 and j in (1, 2):
+                    health, health_reflect = 2, 2
+                if i == 3 and j == 1:
+                    health, health_reflect = 2, 2
                 brick_coords.append(
                     [
-                        start_x + j*brick_default_width,
+                        current_x + j * brick_default_width,
                         current_y,
-                        start_x + (j + 1)*brick_default_width,
+                        current_x + (j + 1) * brick_default_width,
                         current_y + brick_default_height,
-                        1
+                        health
                     ]
                 )
-            current_y += i*brick_default_height
-            if i != 0:
-                start_x -= 0.25 * (i + 1) * brick_default_width
-        
-        print(len(brick_coords))
+                # make bricks on under side of longest row too
+                if i != 5:
+                    brick_coords.append(
+                        [
+                            current_x + j * brick_default_width,
+                            current_y + (reflection_offset - i) * brick_default_height,
+                            current_x + (j + 1) * brick_default_width,
+                            current_y + (reflection_offset + 1 - i) * brick_default_height,
+                            health_reflect
+                        ]
+                    )
+            reflection_offset -= 1
+            current_x -= 0.5 * brick_default_width
+            current_y += brick_default_height
 
     max_brick_y = max([i[3] for i in brick_coords])
     return brick_coords, brick_default_width, brick_default_height, max_brick_y
