@@ -117,7 +117,8 @@ class Paddle():
     def draw_paddle(self):
         screen.blit(self.image, (self.x, self.y))
         return
-    
+
+
 class Ball():
     def __init__(self, x, y, velocity, passthrough):
         self.velocity = velocity
@@ -309,6 +310,7 @@ class Ball():
 
         return None, all_bricks
 
+
 class Brick():
     def __init__(self, x, y, width, height, health, is_alive):
         self.x, self.y = x, y
@@ -335,6 +337,7 @@ class Brick():
             power_up = Powerup(pos[0], pos[1], True, power_type)
             all_powerups.append(power_up)
         return
+    
 
 class Powerup():
     def __init__(self, x, y, is_alive, power_type):
@@ -393,13 +396,13 @@ class Powerup():
                 elif self.power_type == 'ball_speed':
                     for k, ball_obj in enumerate(old_balls_list):
                         new_velocity = (math.sqrt(162/98)*ball_obj.velocity[0], math.sqrt(162/98)*ball_obj.velocity[1]) if abs(b_v_mag_store[k]**2 - 98) < 1 else ball_obj.velocity
-                        ball_obj = ball(x=ball_obj.x, y=ball_obj.y, velocity=new_velocity, passthrough=ball_obj.passthrough)
+                        ball_obj = Ball(x=ball_obj.x, y=ball_obj.y, velocity=new_velocity, passthrough=ball_obj.passthrough)
                         new_balls_list.append(ball_obj)
                     update_powerups("ball_speed", player)
 
                 elif self.power_type == 'ball_pass_through':
                     for k, ball_obj in enumerate(old_balls_list):
-                        ball_obj = ball(x=ball_obj.x, y=ball_obj.y, velocity=ball_obj.velocity, passthrough=True)            
+                        ball_obj = Ball(x=ball_obj.x, y=ball_obj.y, velocity=ball_obj.velocity, passthrough=True)            
                         new_balls_list.append(ball_obj)
                     update_powerups("ball_pass_through", player) 
 
@@ -420,7 +423,7 @@ class Powerup():
 
                             # need to negate vy since down is positive and up is negative
                             vx, vy = b_v_mag_store[k] * np.cos(angle), - b_v_mag_store[k] * np.sin(angle)
-                            new_ball = ball(x=ball_obj.x, y=ball_obj.y, velocity=(vx, vy), passthrough=ball_obj.passthrough)
+                            new_ball = Ball(x=ball_obj.x, y=ball_obj.y, velocity=(vx, vy), passthrough=ball_obj.passthrough)
                             new_balls_list.append(new_ball)
    
                     update_powerups("multi", player)
