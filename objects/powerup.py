@@ -3,7 +3,6 @@ import math
 import time
 import numpy as np
 from variables import *
-from utils import update_powerups
 from objects.ball import Ball
 
 class Powerup():
@@ -59,12 +58,13 @@ class Powerup():
                     new_balls_list = old_balls_list
 
                 elif self.power_type == 'paddle_speed':
-                    update_powerups("paddle_speed", player)
+                    player.speed = 15
+                    player.update_powerups("paddle_speed")
                     new_balls_list = old_balls_list
 
                 elif self.power_type == 'laser':
                     player.time_got_laser = time.time() # Record the time the player got the laser powerup
-                    update_powerups("laser", player)
+                    player.update_powerups("laser")
                     new_balls_list = old_balls_list
 
                 elif self.power_type == 'extra_life':                   
@@ -75,16 +75,21 @@ class Powerup():
                 # even though we're considering the ball here, still store powerups in the player object
                 elif self.power_type == 'ball_speed':
                     for k, ball_obj in enumerate(old_balls_list):
-                        new_velocity = (math.sqrt(162/98)*ball_obj.velocity[0], math.sqrt(162/98)*ball_obj.velocity[1]) if abs(b_v_mag_store[k]**2 - 98) < 1 else ball_obj.velocity
-                        ball_obj = Ball(x=ball_obj.x, y=ball_obj.y, velocity=new_velocity, passthrough=ball_obj.passthrough)
+
+                        new_velocity = (
+                            math.sqrt(162/98)*ball_obj.velocity[0],
+                            math.sqrt(162/98)*ball_obj.velocity[1]
+                        ) if abs(b_v_mag_store[k]**2 - 98) < 1 else ball_obj.velocity
+
+                        ball_obj.velocity = new_velocity
                         new_balls_list.append(ball_obj)
-                    update_powerups("ball_speed", player)
+                    player.update_powerups("ball_speed")
 
                 elif self.power_type == 'ball_pass_through':
                     for k, ball_obj in enumerate(old_balls_list):
-                        ball_obj = Ball(x=ball_obj.x, y=ball_obj.y, velocity=ball_obj.velocity, passthrough=True)            
+                        ball_obj.passthrough = True
                         new_balls_list.append(ball_obj)
-                    update_powerups("ball_pass_through", player) 
+                    player.update_powerups("ball_pass_through") 
 
                 elif self.power_type == 'multi':
 
@@ -106,7 +111,7 @@ class Powerup():
                             new_ball = Ball(x=ball_obj.x, y=ball_obj.y, velocity=(vx, vy), passthrough=ball_obj.passthrough)
                             new_balls_list.append(new_ball)
    
-                    update_powerups("multi", player)
+                    player.update_powerups("multi")
         
                 # Update info bar with newly obtained powerup
                 self.artist.draw_info_bar(player.lives, player.powerups, player.width)

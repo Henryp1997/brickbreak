@@ -197,6 +197,12 @@ def start_game():
                 if time.time() - player.time_got_laser > 10:
                     player.powerups.pop(player.powerups.index("laser"))
                     artist.draw_info_bar(player.lives, player.powerups, player.width)
+                    pg.display.update()
+
+                # Move paddle and check for spacebar presses for laser bolts
+                laser_bolt = player.check_laser_press(all_lasers, frame_count)
+                if laser_bolt is not None:
+                    all_lasers.append((laser_bolt, frame_count))
 
                 # Move laser bolts
                 for i, laser_data in enumerate(all_lasers):
@@ -206,11 +212,6 @@ def start_game():
                     dead = bolt.check_collision(all_bricks, all_powerups, max_brick_y)
                     if dead == "dead":
                         all_lasers.pop(i)
-
-                # Move paddle and check for spacebar presses for laser bolts
-                laser_bolt = player.check_laser_press(all_lasers, frame_count)
-                if laser_bolt is not None:
-                    all_lasers.append((laser_bolt, frame_count))
                 
             # Check if moving paddle
             player.check_movement()

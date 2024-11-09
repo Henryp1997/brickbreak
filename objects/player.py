@@ -65,3 +65,7 @@ class Paddle():
     def change_sprite(self) -> None:
         new_sprite = self.sprite_dict.get(self.width, None)
         self.image = pg.image.load(f"{assets_path}/player_sprites/{new_sprite}.png").convert_alpha()
+
+    def update_powerups(self, powerup) -> None:
+        self.powerups.append(powerup)
+        self.powerups = list(set(self.powerups))
