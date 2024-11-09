@@ -6,7 +6,8 @@ from variables import *
 from objects.powerup import Powerup
 
 class Brick():
-    def __init__(self, x, y, width, height, health):
+    def __init__(self, artist, x, y, width, height, health):
+        self.artist = artist
         self.x, self.y = x, y
         self.width, self.height = width, height
         self.health, self.is_alive = health, True
@@ -18,8 +19,8 @@ class Brick():
         self.image_h1_rect = self.image_h1.get_rect(topleft=(self.x, self.y))
         return
 
-    def draw_brick_sprite(self, artist):
-        artist.screen.blit(getattr(self, f"image_h{self.health}"), (self.x, self.y))
+    def draw_brick_sprite(self):
+        self.artist.screen.blit(getattr(self, f"image_h{self.health}"), (self.x, self.y))
         return
 
     def generate_powerup(self, all_powerups):
@@ -28,6 +29,6 @@ class Brick():
         if generate_powerup == 0 and self.health < 3:
             power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0, len(all_powerup_types.keys()) - 1)]][0]
             # power_type = 'laser' # for debug
-            power_up = Powerup(pos[0], pos[1], True, power_type)
+            power_up = Powerup(self.artist, pos[0], pos[1], True, power_type)
             all_powerups.append(power_up)
         return

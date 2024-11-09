@@ -1,3 +1,4 @@
+import pygame as pg
 from variables import *
 from utils import play_sound
 

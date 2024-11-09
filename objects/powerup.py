@@ -7,7 +7,8 @@ from utils import update_powerups
 from objects.ball import Ball
 
 class Powerup():
-    def __init__(self, x, y, is_alive, power_type):
+    def __init__(self, artist, x, y, is_alive, power_type):
+        self.artist = artist
         self.speed = 3
         self.x, self.y = x, y
         self.width, self.height = brick_default_width, brick_default_height
@@ -25,8 +26,8 @@ class Powerup():
     def check_collisions(self, player, old_balls_list, all_powerups):
         new_balls_list = []
         if self.y > player_init_y - 20:
-            if (self.x + self.width) >= player.x and self.x <= (player.x + player.width):
-            
+            grabbed_powerup = (self.x + self.width) >= player.x and self.x <= (player.x + player.width)
+            if grabbed_powerup:
                 # ball velocity magnitude
                 b_v_mag_store = [math.sqrt(i[0]**2 + i[1]**2) for i in [ball_obj.velocity for ball_obj in old_balls_list]]
 
@@ -42,7 +43,6 @@ class Powerup():
                     player.width = player.width + width_delta
                     player.change_sprite()
 
-
                     new_balls_list = old_balls_list
 
                 elif self.power_type == 'paddle_size_down':
@@ -55,7 +55,6 @@ class Powerup():
                     player.x = player.x + width_delta/2
                     player.width = player.width - width_delta
                     player.change_sprite()
-
 
                     new_balls_list = old_balls_list
 
@@ -109,6 +108,10 @@ class Powerup():
    
                     update_powerups("multi", player)
         
+                # Update info bar with newly obtained powerup
+                self.artist.draw_info_bar(player.lives, player.powerups, player.width)
+                pg.display.update()
+
             else: # player didn't grab powerup
                 for ball_obj in old_balls_list:
                     new_balls_list.append(ball_obj)

@@ -4,6 +4,7 @@ import sys
 import time
 from variables import *
 from levels import generate_brick_coords
+from utils import play_sound
 from objects.artist import Artist
 from objects.player import Paddle
 from objects.ball import Ball
@@ -13,10 +14,11 @@ pg.init()
 pg.display.set_caption("Brickbreaker")
 
 
-def generate_level(level):
+def generate_level(artist, level):
     brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
     all_bricks = [
         Brick(
+            artist,
             coords[0], 
             coords[1], 
             width=brick_default_width, 
@@ -127,13 +129,13 @@ def start_game():
                     if levels_cleared > 0:
                         level += 1
                     levels_cleared += 1
-                    all_bricks, all_balls, max_brick_y = generate_level(level) 
+                    all_bricks, all_balls, max_brick_y = generate_level(artist, level) 
                 
                 # Play sound and subtract from lives count
                 if lost_life:
                     player.lives -= 1
                     if player.lives > 0:
-                        pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/lose_life.wav"))
+                        play_sound("lose_life")
                         revive_ball = True
 
                 # Delete all currently moving powerups
@@ -144,6 +146,7 @@ def start_game():
                 player.x, player.y = player_init_x, player_init_y
                 player.powerups = []
                 player.width = player_default_width
+                player.change_sprite()
 
                 artist.start_or_retry = "start"
                 artist.draw_info_bar(player.lives, player.powerups, player.width)
@@ -154,7 +157,7 @@ def start_game():
                 # Draw brick objects that are still active before entering paused loop
                 for brick_obj in all_bricks:
                     if brick_obj.is_alive:
-                        brick_obj.draw_brick_sprite(artist)
+                        brick_obj.draw_brick_sprite()
                 
                 # Draw a dummy ball on the screen
                 artist.draw_dummy_ball(level)
@@ -163,7 +166,7 @@ def start_game():
 
                 # Cancel out all the drawing to the screen we just did if game over
                 if player.lives == 0:
-                    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/game_over.wav"))
+                    play_sound("game_over")
                     revive_ball = False
                     artist.start_or_retry = "start"
 
@@ -182,7 +185,7 @@ def start_game():
                 player.draw_paddle(artist)
                 for brick_obj in all_bricks:
                     if brick_obj.is_alive:
-                        brick_obj.draw_brick_sprite(artist)
+                        brick_obj.draw_brick_sprite()
 
             ### MAIN GAME LOOP ###
             if revive_ball or restart:
@@ -196,6 +199,7 @@ def start_game():
                 # Check if the laser powerup has timed out
                 if time.time() - player.time_got_laser > 10:
                     player.powerups.pop(player.powerups.index("laser"))
+                    artist.draw_info_bar(player.lives, player.powerups, player.width)
 
                 # Move laser bolts
                 for i, laser_data in enumerate(all_lasers):
@@ -232,17 +236,10 @@ def start_game():
             # Remove multi powerup if only one ball left              
             if len(all_balls) == 1 and "multi" in player.powerups:
                 player.powerups.pop(player.powerups.index("multi"))
-
-            if player.width != width_memory or player.powerups != powerups_memory or player.lives != lives_memory:
-                # Only update info bar if the player gains/loses a powerup or gains a life
                 artist.draw_info_bar(player.lives, player.powerups, player.width)
-                pg.display.update()
-            else:
-                pg.display.update((0, 0, artist.screen_x, info_bar_start))
 
-            powerups_memory = player.powerups
-            width_memory = player.width
-            lives_memory = player.lives
+            # Only update playable area. Info bar will be updated in relevant sections if required
+            pg.display.update((0, 0, artist.screen_x, info_bar_start))
 
             frames[1] = frame_count
 
