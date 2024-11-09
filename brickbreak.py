@@ -38,9 +38,10 @@ def generate_level(artist, level):
     return all_bricks, all_balls, max_brick_y
 
 
-def initialise_objects(level):  
+def initialise_objects(artist, level):  
     # Create objects
     player = Paddle(
+        artist=artist,
         x=player_init_x,
         y=player_init_y,
         width=player_default_width,
@@ -54,11 +55,7 @@ def initialise_objects(level):
         passthrough=False
     )
 
-    powerups_memory = player.powerups
-    width_memory = player.width
-    lives_memory = player.lives
-
-    return player, ball_obj, powerups_memory, width_memory, lives_memory
+    return player, ball_obj
 
 
 def check_system_keys(restart, init_everything, all_bricks):
@@ -111,7 +108,7 @@ def start_game():
             all_lasers, all_bricks, all_powerups = [], [], []
             level, levels_cleared = 0, 0
             revive_ball, restart, init_everything = False, False, False
-            player, ball_obj, powerups_memory, width_memory, lives_memory = initialise_objects(level)
+            player, ball_obj = initialise_objects(artist, level)
             pg.display.update()
        
         elif not init_everything:
@@ -151,7 +148,7 @@ def start_game():
                 artist.start_or_retry = "start"
                 artist.draw_info_bar(player.lives, player.powerups, player.width)
                 artist.draw_start_text()
-                player.draw_paddle(artist)
+                player.draw_paddle()
                 
 
                 # Draw brick objects that are still active before entering paused loop
@@ -182,7 +179,7 @@ def start_game():
                 remain_paused(key=exit_key)
 
             elif not lost_life and not completed_level:
-                player.draw_paddle(artist)
+                player.draw_paddle()
                 for brick_obj in all_bricks:
                     if brick_obj.is_alive:
                         brick_obj.draw_brick_sprite()

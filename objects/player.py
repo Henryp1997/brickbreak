@@ -4,7 +4,8 @@ from utils import play_sound
 from objects.laser_bolt import Laser
 
 class Paddle():
-    def __init__(self, x, y, width, powerups, lives) -> None:
+    def __init__(self, artist, x, y, width, powerups, lives) -> None:
+        self.artist = artist
         self.x, self.y = x, y
         self.width, self.height = width, 15
         self.rect_center = (self.x + self.width / 2, self.y + self.height / 2)
@@ -58,8 +59,8 @@ class Paddle():
             laser_bolt = Laser(laser_x, laser_y)
             return laser_bolt
 
-    def draw_paddle(self, artist) -> None:
-        artist.screen.blit(self.image, (self.x, self.y))
+    def draw_paddle(self) -> None:
+        self.artist.screen.blit(self.image, (self.x, self.y))
     
     def change_sprite(self) -> None:
         new_sprite = self.sprite_dict.get(self.width, None)
