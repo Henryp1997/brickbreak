@@ -63,5 +63,3 @@ all_powerup_types = {
     "Small paddle":     ("paddle_size_down",  635,  "small_powerup"),
     "Extra Life":       ("extra_life",        None, "life_powerup")
 }
-
-screen = pg.display.set_mode((screen_x, screen_y))

@@ -6,36 +6,38 @@ from variables import *
 import time
 
 class Artist():
-    def __init__(self, screen_x, screen_y, start_or_retry):
+    def __init__(self, screen_x, screen_y, start_or_retry) -> None:
+        self.screen = pg.display.set_mode((screen_x, screen_y))
         self.screen_x = screen_x
         self.screen_y = screen_y
         self.start_or_retry = start_or_retry
  
-    def draw_border(self, colour):
-        pg.draw.rect(screen, colour, pg.Rect((0, 0), (screen_x, info_bar_start + round(screen_x*0.002))), width=5)
+    def fill_screen(self, colour) -> None:
+        self.screen.fill(colour)
 
-    def draw_start_text(self):
+    def draw_border(self, colour) -> None:
+        pg.draw.rect(self.screen, colour, pg.Rect((0, 0), (screen_x, info_bar_start + round(screen_x*0.002))), width=5)
+
+    def draw_start_text(self) -> None:
         text_pos = (self.screen_x/2 - round(self.screen_x*0.13), self.screen_y/2 - (self.screen_y/9))
         font = pg.font.SysFont('Arial', 30)
-        screen.blit(font.render(f'Press Space to {self.start_or_retry}', True, colours['RED']), text_pos)
-        return
+        self.screen.blit(font.render(f'Press Space to {self.start_or_retry}', True, colours['RED']), text_pos)
 
-    def draw_game_over_screen(self):
+    def draw_game_over_screen(self) -> None:
         text1_pos = (self.screen_x/2 - round(self.screen_x/10), self.screen_y/2 - (self.screen_y/9))
         text2_pos = (text1_pos[0] - round(self.screen_x*0.03), text1_pos[1] + round(self.screen_y*(5/90)))
         font = pg.font.SysFont('Arial', 30)
-        screen.blit(font.render('GAME OVER', True, colours['RED']), text1_pos)
-        screen.blit(font.render('Press Esc to restart', True, colours['RED']), text2_pos)
-        return
+        self.screen.blit(font.render('GAME OVER', True, colours['RED']), text1_pos)
+        self.screen.blit(font.render('Press Esc to restart', True, colours['RED']), text2_pos)
 
-    def draw_info_bar(self, lives, player_powerups, player_width):
-        pg.draw.rect(screen, colours['GREY2'], pg.Rect((0, info_bar_start), (self.screen_x,self.screen_y - info_bar_start)), width=5)
+    def draw_info_bar(self, lives, player_powerups, player_width) -> None:
+        pg.draw.rect(self.screen, colours['GREY2'], pg.Rect((0, info_bar_start), (self.screen_x,self.screen_y - info_bar_start)), width=5)
         font = pg.font.SysFont('Arial', 30)
-        screen.blit(font.render(f'Lives:', True, colours['RED']), (round(self.screen_x*0.02), info_bar_start + round(self.screen_x*0.02)))
+        self.screen.blit(font.render(f'Lives:', True, colours['RED']), (round(self.screen_x*0.02), info_bar_start + round(self.screen_x*0.02)))
         font = pg.font.SysFont('Arial', 25)
-        screen.blit(font.render(f'{lives}', True, colours['GREY1']), (round(self.screen_x*(45/1000)), info_bar_start + round(self.screen_x*(58/1000))))
+        self.screen.blit(font.render(f'{lives}', True, colours['GREY1']), (round(self.screen_x*(45/1000)), info_bar_start + round(self.screen_x*(58/1000))))
         font = pg.font.SysFont('Arial', 30)
-        screen.blit(font.render(f'Active modifiers:', True, colours['RED']),(175, info_bar_start + 20))
+        self.screen.blit(font.render(f'Active modifiers:', True, colours['RED']),(175, info_bar_start + 20))
 
         font = pg.font.SysFont('Arial', 15)
         for i, j in enumerate(list(all_powerup_types.keys())):
@@ -54,11 +56,17 @@ class Artist():
                         col = colours['RED']
                     else:
                         col = colours['GREY1']
-                screen.blit(font.render(j, True, col),(all_powerup_types[j][1], info_bar_start + self.screen_x*(65/850)))
+                self.screen.blit(font.render(j, True, col),(all_powerup_types[j][1], info_bar_start + self.screen_x*(65/850)))
+
+    def draw_dummy_ball(self, level) -> None:
+        self.screen.blit(
+            pg.image.load(f'{assets_path}/player_sprites/ball_default.png').convert_alpha(),
+            (ball_init_pos[level][0], ball_init_pos[level][1])
+        )
 
 
 class Paddle():
-    def __init__(self, x, y, width, powerups, lives):
+    def __init__(self, x, y, width, powerups, lives) -> None:
         self.x, self.y = x, y
         self.width, self.height = width, 15
         self.rect_center = (self.x + self.width / 2, self.y + self.height / 2)
@@ -69,17 +77,15 @@ class Paddle():
         self.height = 15
         self.powerups = powerups
         self.rect = pg.Rect((self.x, self.y), (self.width, self.height))
-        image_dict = {
+        self.sprite_dict = {
             150: "paddle",
             225: "paddle_long",
             100: "paddle_short"
         }
-        img_name = image_dict.get(self.width, None)        
-        self.image = pg.image.load(f"{assets_path}/player_sprites/{img_name}.png").convert_alpha()
+        self.image = pg.image.load(f"{assets_path}/player_sprites/paddle.png").convert_alpha()
         self.time_got_laser = 0
-        return
     
-    def check_movement(self):
+    def check_movement(self) -> None:
         key = pg.key.get_pressed()
         # Move paddle left or right depending on key press
         # and whether paddle is in bounds or not
@@ -92,7 +98,7 @@ class Paddle():
                 self.x += self.speed
                 self.rect.move_ip(self.speed, 0)
 
-    def check_laser_press(self, all_lasers, frame_count):
+    def check_laser_press(self, all_lasers, frame_count) -> "Laser":
         # Generate a laser object if laser key pressed and has powerup
         key = pg.key.get_pressed()
         generate_bolt = False
@@ -111,12 +117,15 @@ class Paddle():
             play_sound("laser_shot")
             laser_x = self.x + (self.width - laser_bolt_init_width)/2
             laser_y = self.y - laser_bolt_init_height
-            laser_bolt = laser(laser_x, laser_y)
+            laser_bolt = Laser(laser_x, laser_y)
             return laser_bolt
 
-    def draw_paddle(self):
-        screen.blit(self.image, (self.x, self.y))
-        return
+    def draw_paddle(self, artist) -> None:
+        artist.screen.blit(self.image, (self.x, self.y))
+    
+    def change_sprite(self) -> None:
+        new_sprite = self.sprite_dict.get(self.width, None)
+        self.image = pg.image.load(f"{assets_path}/player_sprites/{new_sprite}.png").convert_alpha()
 
 
 class Ball():
@@ -133,13 +142,13 @@ class Ball():
         self.x += self.velocity[0]; self.y += self.velocity[1]
         return
 
-    def draw_ball(self):
+    def draw_ball(self, artist):
         img = self.image
         if self.passthrough:
             img = self.unstop_image          
         if (self.y + self.height) > (player_init_y + round(screen_y / 30)): # Don't draw if in the info bar section of the screen
             return
-        screen.blit(img, (self.x, self.y))
+        artist.screen.blit(img, (self.x, self.y))
         return
         
     def change_speed_upon_brick_collide(
@@ -312,10 +321,10 @@ class Ball():
 
 
 class Brick():
-    def __init__(self, x, y, width, height, health, is_alive):
+    def __init__(self, x, y, width, height, health):
         self.x, self.y = x, y
         self.width, self.height = width, height
-        self.health, self.is_alive = health, is_alive
+        self.health, self.is_alive = health, True
         self.image_h3 = pg.image.load(f"{assets_path}/brick_h3.png").convert_alpha()
         self.image_h2 = pg.image.load(f"{assets_path}/brick_h2.png").convert_alpha()
         self.image_h1 = pg.image.load(f"{assets_path}/brick_h1.png").convert_alpha()
@@ -324,8 +333,8 @@ class Brick():
         self.image_h1_rect = self.image_h1.get_rect(topleft=(self.x, self.y))
         return
 
-    def draw_brick_sprite(self):
-        screen.blit(getattr(self, f"image_h{self.health}"), (self.x, self.y))
+    def draw_brick_sprite(self, artist):
+        artist.screen.blit(getattr(self, f"image_h{self.health}"), (self.x, self.y))
         return
 
     def generate_powerup(self, all_powerups):
@@ -350,9 +359,9 @@ class Powerup():
         self.image = pg.image.load(f"{assets_path}/powerup_sprites/{img_name}.png").convert_alpha()
         return
 
-    def update_position(self):
+    def update_position(self, artist):
         self.y += self.speed
-        screen.blit(self.image, (self.x, self.y))
+        artist.screen.blit(self.image, (self.x, self.y))
         return
     
     def check_collisions(self, player, old_balls_list, all_powerups):
@@ -365,17 +374,40 @@ class Powerup():
 
                 # powerups changing paddle properties
                 if self.power_type == 'paddle_size_up':
-                    width_delta = abs(player.width - all_widths[all_widths.index(player.width) + 1]) if player.width != player_long else 0
-                    new_x = player.x - width_delta/2
-                    new_width = player.width + width_delta
-                    player = Paddle(x=new_x, y=player.y, width=new_width, powerups=player.powerups, lives=player.lives)
+                    width_delta = 0
+                    if player.width != player_long:
+                        next_size = all_widths[all_widths.index(player.width) + 1]
+                        width_delta = abs(player.width - next_size)
+
+                    # new_x = player.x - width_delta/2
+                    # new_width = player.width + width_delta
+                    # player = Paddle(x=new_x, y=player.y, width=new_width, powerups=player.powerups, lives=player.lives)
+
+                    # Update player properties
+                    player.x = player.x - width_delta/2
+                    player.width = player.width + width_delta
+                    player.change_sprite()
+
+
                     new_balls_list = old_balls_list
 
                 elif self.power_type == 'paddle_size_down':
-                    width_delta = abs(player.width - all_widths[all_widths.index(player.width) - 1]) if player.width != player_short else 0
-                    new_x = player.x + width_delta/2
-                    new_width = player.width - width_delta
-                    player = Paddle(x=new_x, y=player.y, width=new_width, powerups=player.powerups, lives=player.lives)
+                    width_delta = 0
+                    if player.width != player_short:
+                        next_size = all_widths[all_widths.index(player.width) - 1]
+                        width_delta = abs(player.width - next_size)
+
+                    # width_delta = abs(player.width - all_widths[all_widths.index(player.width) - 1]) if player.width != player_short else 0
+                    # new_x = player.x + width_delta/2
+                    # new_width = player.width - width_delta
+                    # player = Paddle(x=new_x, y=player.y, width=new_width, powerups=player.powerups, lives=player.lives)
+
+                    # Update player properties
+                    player.x = player.x + width_delta/2
+                    player.width = player.width - width_delta
+                    player.change_sprite()
+
+
                     new_balls_list = old_balls_list
 
                 elif self.power_type == 'paddle_speed':
@@ -465,21 +497,19 @@ def calculate_ball_angle(vel):
     
     return theta
 
-class laser():
-    def __init__(self, x, y):
+class Laser():
+    def __init__(self, x, y) -> None:
         self.x, self.y = x, y
         self.speed = -20
         self.width, self.height = laser_bolt_init_width, laser_bolt_init_height
     
-    def draw_laser(self):
-        pg.draw.rect(screen, colours["ELEC_BLUE"], (self.x, self.y, self.width, self.height))
-        return
+    def draw_laser(self, artist) -> None:
+        pg.draw.rect(artist.screen, colours["ELEC_BLUE"], (self.x, self.y, self.width, self.height))
 
-    def move(self):
+    def move(self) -> None:
         self.y += self.speed
-        return
     
-    def check_collision(self, all_bricks, all_powerups, max_brick_y):
+    def check_collision(self, all_bricks, all_powerups, max_brick_y) -> None:
         if self.y > max_brick_y + 20:
             return
         bricks_hit = 0
@@ -508,10 +538,9 @@ class laser():
                                 # turn the padlocked brick into a normal 2-health brick
                                 locked_brick.health -= 1
 
-def play_sound(sound):
+def play_sound(sound) -> None:
     pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/{sound}.wav"))
 
-def update_powerups(powerup, player):
+def update_powerups(powerup, player) -> None:
     player.powerups.append(powerup)
     player.powerups = list(set(player.powerups))
-    return
