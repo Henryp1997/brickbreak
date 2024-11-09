@@ -1,4 +1,3 @@
-import pygame as pg
 import os
 from win32api import GetSystemMetrics
 
