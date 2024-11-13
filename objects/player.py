@@ -1,5 +1,15 @@
 import pygame as pg
-from variables import *
+from variables import(
+    assets_path,
+    player_default_speed,
+    screen_x,
+    laser_cooldown_time,
+    laser_bolt_init_width,
+    laser_bolt_init_height,
+    player_init_x,
+    player_init_y,
+    player_default_width
+)
 from utils import play_sound
 from objects.laser_bolt import Laser
 
@@ -67,3 +77,10 @@ class Paddle():
     def update_powerups(self, powerup) -> None:
         self.powerups.append(powerup)
         self.powerups = list(set(self.powerups))
+
+    def reset_attributes(self) -> None:
+        self.x, self.y = player_init_x, player_init_y
+        self.powerups = []
+        self.width = player_default_width
+        self.speed = player_default_speed
+        self.change_sprite()

@@ -1,5 +1,11 @@
 import pygame as pg
-from variables import *
+from variables import(
+    laser_bolt_init_width,
+    laser_bolt_init_height,
+    colours,
+    brick_default_width,
+    brick_default_height
+)
 from utils import play_sound
 
 class Laser():

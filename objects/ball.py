@@ -1,31 +1,35 @@
 import pygame as pg
 import math
 import numpy as np
-from variables import *
+from variables import (
+    assets_path,
+    player_init_y,
+    screen_x,
+    screen_y,
+    brick_default_width,
+    brick_default_height
+)
 from utils import play_sound
 
 class Ball():
-    def __init__(self, x, y, velocity, passthrough):
+    def __init__(self, x, y, velocity, passthrough) -> None:
         self.velocity = velocity
         self.height = 10
         self.x, self.y = x, y
         self.passthrough = passthrough # Can the ball delete bricks without bouncing (requires powerup)
         self.image = pg.image.load(f"{assets_path}/player_sprites/ball_default.png").convert_alpha()
         self.unstop_image = pg.image.load(f"{assets_path}/player_sprites/ball_unstop.png").convert_alpha()
-        return
     
-    def move(self):
+    def move(self) -> None:
         self.x += self.velocity[0]; self.y += self.velocity[1]
-        return
 
-    def draw_ball(self, artist):
+    def draw_ball(self, artist) -> None:
         img = self.image
         if self.passthrough:
             img = self.unstop_image          
         if (self.y + self.height) > (player_init_y + round(screen_y / 30)): # Don't draw if in the info bar section of the screen
             return
         artist.screen.blit(img, (self.x, self.y))
-        return
         
     def change_speed_upon_brick_collide(
             self,
@@ -37,7 +41,7 @@ class Ball():
             dont_change_ball_speed, 
             negate_speed_x, 
             negate_speed_y
-        ):
+        ) -> None:
         # Coords to check boundaries
         coords = (
             (self.y,               self.x + self.height, self.x),
@@ -88,7 +92,7 @@ class Ball():
         ball_v_mag = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
 
         # collision with paddle
-        if abs(self.y + self.height - player.y) < 10:
+        if abs(self.y + self.height - player.y) < 5:
             # calculate what the angle of reflection should be when hitting the paddle
             # this should vary from 90 deg if the ball hits the centre to almost zero if the ball hits the edges
             relative_x = self.x - player.x + self.height
@@ -105,11 +109,17 @@ class Ball():
                     angle = ((grad * relative_x) + intercept) * np.pi/180
                     if self.velocity[0] > 0:
                         play_sound("bounce")
-                        self.velocity = (negate_speed*ball_v_mag*np.cos(angle), -ball_v_mag*np.sin(angle))
+                        self.velocity = (
+                            negate_speed*ball_v_mag*np.cos(angle),
+                            -ball_v_mag*np.sin(angle)
+                        )
                         return None, all_bricks
                     elif self.velocity[0] < 0:
                         play_sound("bounce")
-                        self.velocity = (negate_speed*ball_v_mag*np.cos(angle), -ball_v_mag*np.sin(angle))
+                        self.velocity = (
+                            negate_speed*ball_v_mag*np.cos(angle),
+                            -ball_v_mag*np.sin(angle)
+                        )
                         return None, all_bricks
 
         # collision with brick

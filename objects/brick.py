@@ -2,7 +2,7 @@
 
 import random
 import pygame as pg
-from variables import *
+from variables import assets_path, all_powerup_types
 from objects.powerup import Powerup
 
 class Brick():

@@ -1,5 +1,5 @@
 import pygame as pg
-from pygame.locals import *
+from pygame.locals import KEYDOWN, KMOD_SHIFT, K_ESCAPE, K_SPACE, K_k, QUIT
 import sys
 import time
 from variables import *
@@ -140,24 +140,19 @@ def start_game():
 
                 # Reset player position to center, reset player speed and size and
                 # remove powerups if lost a life OR beat level
-                player.x, player.y = player_init_x, player_init_y
-                player.powerups = []
-                player.width = player_default_width
-                player.speed = player_default_speed
-                player.change_sprite()
+                player.reset_attributes()
+                player.draw_paddle()
 
                 artist.start_or_retry = "start"
                 artist.draw_info_bar(player.lives, player.powerups, player.width)
                 artist.draw_start_text()
-                player.draw_paddle()
                 
-
                 # Draw brick objects that are still active before entering paused loop
                 for brick_obj in all_bricks:
                     if brick_obj.is_alive:
                         brick_obj.draw_brick_sprite()
                 
-                # Draw a dummy ball on the screen
+                # Draw a dummy ball on the screen. Level defines position of dummy ball
                 artist.draw_dummy_ball(level)
         
                 exit_key = "SPACE"
@@ -169,8 +164,6 @@ def start_game():
                     artist.start_or_retry = "start"
 
                     # Update screen before entering loop
-                    artist.fill_screen(colour=colours["BLACK"])
-                    artist.draw_border(colour=colours["GREY2"])
                     artist.draw_game_over_screen()
                     restart, init_everything = True, True # Simulate a full restart
                     exit_key = "ESCAPE"

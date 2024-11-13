@@ -1,5 +1,15 @@
 import pygame as pg
-from variables import *
+from variables import (
+    assets_path,
+    screen_x,
+    colours,
+    info_bar_start,
+    all_powerup_types,
+    player_default_width,
+    player_long,
+    player_short,
+    ball_init_pos
+)
 
 class Artist():
     def __init__(self, screen_x, screen_y, start_or_retry) -> None:
@@ -20,6 +30,8 @@ class Artist():
         self.screen.blit(font.render(f'Press Space to {self.start_or_retry}', True, colours['RED']), text_pos)
 
     def draw_game_over_screen(self) -> None:
+        self.fill_screen(colour=colours["BLACK"])
+        self.draw_border(colour=colours["GREY2"])
         text1_pos = (self.screen_x/2 - round(self.screen_x/10), self.screen_y/2 - (self.screen_y/9))
         text2_pos = (text1_pos[0] - round(self.screen_x*0.03), text1_pos[1] + round(self.screen_y*(5/90)))
         font = pg.font.SysFont('Arial', 30)
