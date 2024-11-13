@@ -28,7 +28,7 @@ class Brick():
         generate_powerup = random.randint(0, 2)
         if generate_powerup == 0 and self.health < 3:
             power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0, len(all_powerup_types.keys()) - 1)]][0]
-            power_type = 'laser' # for debug
+            # power_type = 'laser' # for debug
             power_up = Powerup(self.artist, pos[0], pos[1], True, power_type)
             all_powerups.append(power_up)
         return
