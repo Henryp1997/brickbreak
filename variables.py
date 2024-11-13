@@ -27,6 +27,8 @@ colours = {
 
 assets_path = f"{os.path.dirname(os.path.abspath(__file__))}/assets"
 
+player_default_speed = 10
+player_fast_speed = 15
 player_default_width = 150
 player_short = 100
 player_long = 225

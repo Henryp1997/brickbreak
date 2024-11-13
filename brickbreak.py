@@ -138,11 +138,12 @@ def start_game():
                 # Delete all currently moving powerups
                 all_powerups = []
 
-                # Reset player position to center, reset player size and
+                # Reset player position to center, reset player speed and size and
                 # remove powerups if lost a life OR beat level
                 player.x, player.y = player_init_x, player_init_y
                 player.powerups = []
                 player.width = player_default_width
+                player.speed = player_default_speed
                 player.change_sprite()
 
                 artist.start_or_retry = "start"

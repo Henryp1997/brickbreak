@@ -58,7 +58,7 @@ class Powerup():
                     new_balls_list = old_balls_list
 
                 elif self.power_type == 'paddle_speed':
-                    player.speed = 15
+                    player.speed = player_fast_speed
                     player.update_powerups("paddle_speed")
                     new_balls_list = old_balls_list
 
