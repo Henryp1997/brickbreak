@@ -10,9 +10,7 @@ class Paddle():
         self.width, self.height = width, 15
         self.rect_center = (self.x + self.width / 2, self.y + self.height / 2)
         self.lives = lives
-        self.speed = 10
-        if 'paddle_speed' in powerups:
-            self.speed = 15
+        self.speed = player_default_speed
         self.height = 15
         self.powerups = powerups
         self.rect = pg.Rect((self.x, self.y), (self.width, self.height))
