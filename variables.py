@@ -1,4 +1,4 @@
-import os
+import os,sys
 from win32api import GetSystemMetrics
 
 # y_res = GetSystemMetrics(0)
@@ -25,7 +25,14 @@ colours = {
     "FIRE":      "#FC4903"
 }
 
-assets_path = f"{os.path.dirname(os.path.abspath(__file__))}/assets"
+if getattr(sys, "frozen", False):
+    # If the application is frozen (bundled by cx_Freeze)
+    base_path = os.path.dirname(sys.executable)
+else:
+    # If running in a development environment
+    base_path = os.path.dirname(os.path.abspath(__file__))
+
+assets_path = f"{base_path}/assets"
 
 player_default_speed = 10
 player_fast_speed = 15
