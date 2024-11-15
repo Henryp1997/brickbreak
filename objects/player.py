@@ -1,3 +1,4 @@
+import time
 import pygame as pg
 from variables import(
     assets_path,
@@ -14,6 +15,23 @@ from utils import play_sound
 from objects.laser_bolt import Laser
 
 class Paddle():
+    __slots__ = [
+        "artist",
+        "x",
+        "y",
+        "width",
+        "height", 
+        "rect_center",
+        "lives",
+        "speed", 
+        "height",
+        "powerups", 
+        "rect", 
+        "sprite_dict", 
+        "image", 
+        "time_got_laser",
+        "time_shot_laser"
+    ]
     def __init__(self, artist, x, y, width, powerups, lives) -> None:
         self.artist = artist
         self.x, self.y = x, y
@@ -31,6 +49,7 @@ class Paddle():
         }
         self.image = pg.image.load(f"{assets_path}/player_sprites/paddle.png").convert_alpha()
         self.time_got_laser = 0
+        self.time_shot_laser = 0
     
     def check_movement(self) -> None:
         key = pg.key.get_pressed()
@@ -55,8 +74,7 @@ class Paddle():
             generate_bolt = True
         else:
             # Only generate another bolt if cooldown period has passed
-            frames = [i[1] for i in all_lasers]
-            if abs(frame_count - max(frames)) > laser_cooldown_time:
+            if time.time() - self.time_shot_laser > 0.75:
                 generate_bolt = True
 
         # Generate bolt if all conditions are met
@@ -65,6 +83,7 @@ class Paddle():
             laser_x = self.x + (self.width - laser_bolt_init_width)/2
             laser_y = self.y - laser_bolt_init_height
             laser_bolt = Laser(laser_x, laser_y)
+            self.time_shot_laser = time.time() # Update for cooldown time
             return laser_bolt
 
     def draw_paddle(self) -> None:
