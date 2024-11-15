@@ -64,7 +64,7 @@ class Paddle():
                 self.x += self.speed
                 self.rect.move_ip(self.speed, 0)
 
-    def check_laser_press(self, all_lasers, frame_count) -> "Laser":
+    def check_laser_press(self, all_lasers) -> "Laser":
         # Generate a laser object if laser key pressed and has powerup
         key = pg.key.get_pressed()
         generate_bolt = False

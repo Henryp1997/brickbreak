@@ -85,8 +85,6 @@ def remain_paused(key) -> None:
 
 def start_game():
     init_everything = True
-    frame_count = 0 # For delaying laser pulses
-    frames = [0, 0]
 
     # Create object for drawing things to the screen
     artist = Artist(
@@ -99,7 +97,6 @@ def start_game():
     while True:
         clock = pg.time.Clock()
         clock.tick(60)
-        frame_count += 1
         
         # Reset screen contents
         artist.fill_screen(colour=colours["BLACK"])
@@ -194,13 +191,12 @@ def start_game():
                     pg.display.update()
 
                 # Move paddle and check for spacebar presses for laser bolts
-                laser_bolt = player.check_laser_press(all_lasers, frame_count)
+                laser_bolt = player.check_laser_press(all_lasers)
                 if laser_bolt is not None:
-                    all_lasers.append((laser_bolt, frame_count))
+                    all_lasers.append(laser_bolt)
 
                 # Move laser bolts
-                for i, laser_data in enumerate(all_lasers):
-                    bolt = laser_data[0] # laser_data[1] is the frame number for that laser
+                for i, bolt in enumerate(all_lasers):
                     bolt.draw_laser(artist)
                     bolt.move()
                     dead = bolt.check_collision(all_bricks, all_powerups, max_brick_y)
@@ -232,8 +228,6 @@ def start_game():
 
             # Only update playable area. Info bar will be updated in relevant sections if required
             pg.display.update((0, 0, artist.screen_x, info_bar_start))
-
-            frames[1] = frame_count
 
             # Check for special key combinations
             restart, init_everything, all_bricks = check_system_keys(restart, init_everything, all_bricks)
