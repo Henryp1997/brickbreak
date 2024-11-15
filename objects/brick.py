@@ -6,6 +6,21 @@ from variables import assets_path, all_powerup_types
 from objects.powerup import Powerup
 
 class Brick():
+    __slots__ = [
+        "artist",
+        "x",
+        "y",
+        "width",
+        "height",
+        "health",
+        "is_alive",
+        "image_h3",
+        "image_h2",
+        "image_h1",
+        "image_h3_rect",
+        "image_h2_rect",
+        "image_h1_rect"
+    ]
     def __init__(self, artist, x, y, width, height, health):
         self.artist = artist
         self.x, self.y = x, y
@@ -28,7 +43,7 @@ class Brick():
         generate_powerup = random.randint(0, 2)
         if generate_powerup == 0 and self.health < 3:
             power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0, len(all_powerup_types.keys()) - 1)]][0]
-            # power_type = 'paddle_speed' # for debug
+            # power_type = 'laser' # for debug
             power_up = Powerup(self.artist, pos[0], pos[1], True, power_type)
             all_powerups.append(power_up)
         return

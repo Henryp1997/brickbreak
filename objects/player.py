@@ -9,7 +9,9 @@ from variables import(
     laser_bolt_init_height,
     player_init_x,
     player_init_y,
-    player_default_width
+    player_default_width,
+    player_short,
+    all_widths
 )
 from utils import play_sound
 from objects.laser_bolt import Laser
@@ -102,4 +104,15 @@ class Paddle():
         self.powerups = []
         self.width = player_default_width
         self.speed = player_default_speed
+        self.change_sprite()
+
+    def change_width(self, width, min_plus_1) -> None:
+        width_delta = 0
+        if self.width != width:
+            next_size = all_widths[all_widths.index(self.width) + min_plus_1]
+            width_delta = abs(self.width - next_size)
+
+        # Update player properties
+        self.x = self.x - (min_plus_1 * width_delta/2)
+        self.width = self.width + (min_plus_1 * width_delta)
         self.change_sprite()
