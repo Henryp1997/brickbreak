@@ -121,8 +121,8 @@ class Ball():
                     )
                     return None, all_bricks
 
-        # collision with brick
-        if self.y < max_brick_y + 20:
+        # Collision with brick. Only check if close enough to the lowest brick
+        if self.y < max_brick_y + 10:
             # Only check the bricks within a certain distance of the ball
             bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < 1.25*brick_default_width]
             all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in bricks_to_check]
