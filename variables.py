@@ -1,8 +1,5 @@
 import os
-from win32api import GetSystemMetrics
 
-# y_res = GetSystemMetrics(0)
-# x_res = GetSystemMetrics(1)
 x_res = 1150
 y_res = int(16 * x_res / 9)
 screen_x = int(0.75 * x_res)

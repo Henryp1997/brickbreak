@@ -37,7 +37,7 @@ class Ball():
             all_bricks, 
             all_powerups, 
             brick_boundaries, 
-            direction, 
+            direction,              # 0: up 1: right 2: down 3: left
             dont_change_ball_speed, 
             negate_speed_x, 
             negate_speed_y
@@ -105,22 +105,21 @@ class Ball():
                     relative_x = player.width - relative_x
                     negate_speed = 1
 
-                if self.velocity[1] > 0: # This prevents collision glitches
-                    angle = ((grad * relative_x) + intercept) * np.pi/180
-                    if self.velocity[0] > 0:
-                        play_sound("bounce")
-                        self.velocity = (
-                            negate_speed*ball_v_mag*np.cos(angle),
-                            -ball_v_mag*np.sin(angle)
-                        )
-                        return None, all_bricks
-                    elif self.velocity[0] < 0:
-                        play_sound("bounce")
-                        self.velocity = (
-                            negate_speed*ball_v_mag*np.cos(angle),
-                            -ball_v_mag*np.sin(angle)
-                        )
-                        return None, all_bricks
+                angle = ((grad * relative_x) + intercept) * np.pi/180
+                if self.velocity[0] > 0:
+                    play_sound("bounce")
+                    self.velocity = (
+                        negate_speed*ball_v_mag*np.cos(angle),
+                        -ball_v_mag*np.sin(angle)
+                    )
+                    return None, all_bricks
+                elif self.velocity[0] < 0:
+                    play_sound("bounce")
+                    self.velocity = (
+                        negate_speed*ball_v_mag*np.cos(angle),
+                        -ball_v_mag*np.sin(angle)
+                    )
+                    return None, all_bricks
 
         # collision with brick
         if self.y < max_brick_y + 20:
