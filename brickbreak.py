@@ -210,8 +210,8 @@ def start_game():
             # If the paddle width changes AFTER checking collisions with the ball, the collisions will always be off
             for power_up in all_powerups:
                 if power_up.is_alive:
-                    power_up.update_position(artist)
-                    player, all_balls = power_up.check_collisions(player, all_balls, all_powerups)
+                    power_up.move(artist, all_powerups)
+                    player, all_balls = power_up.check_gained_powerup(player, all_balls, all_powerups)
 
             # Move balls
             for ball_obj in all_balls:

@@ -23,6 +23,40 @@ class Ball():
     def move(self) -> None:
         self.x += self.velocity[0]; self.y += self.velocity[1]
 
+    def v_mag(self) -> float:
+        """ Calculate the magnitude of the ball's velocity """
+        return math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
+    
+    def v_comps(self, vmag, theta) -> tuple:
+        """ Calculate the velocity components from magnitude """
+        vx = +vmag * np.cos(theta)
+        vy = -vmag * np.sin(theta) # Down is increasing y, hence -ve sign
+        return vx, vy
+    
+    def v_angle(self) -> float:
+        vx, vy = self.velocity
+        try:
+            # upper right quadrant
+            if vx > 0 and vy <= 0:
+                theta = np.arctan(-vy / vx)
+            # upper left quadrant
+            elif vx < 0 and vy <= 0:
+                theta = np.pi + np.arctan(-vy / vx)
+            # lower left quadrant
+            elif vx < 0 and vy > 0:
+                theta = np.pi + np.arctan(-vy / vx)
+            # lower right quadrant
+            elif vx > 0 and vy > 0:
+                theta = 2*np.pi + np.arctan(-vy / vx)
+
+        except ZeroDivisionError:
+            if vy < 0:
+                theta = np.pi/2
+            else:
+                theta = 3*np.pi/2
+        
+        return theta
+
     def draw_ball(self, artist) -> None:
         img = self.image
         if self.passthrough:
@@ -57,7 +91,7 @@ class Ball():
             (+self.velocity[0])
         )
         brick_hit = False
-        if abs(coords[direction][0] - brick_boundaries[0]) < 10:
+        if abs(coords[direction][0] - brick_boundaries[0]) < 10: # Currently uses buffer size of 10 to check collisions. TODO
             if brick_boundaries[1] <= coords[direction][1] and coords[direction][2] <= brick_boundaries[2]:
                 if speeds[direction] < 0:
                     if not dont_change_ball_speed:
@@ -82,7 +116,7 @@ class Ball():
             if len(all_bricks) == 1:
                 locked_brick = all_bricks[0]
                 if locked_brick.health == 3:
-                    # turn the padlocked brick into a normal 2-health brick
+                    # Turn the padlocked brick into a normal 2-health brick if there is one
                     locked_brick.health -= 1
 
             brick_obj.generate_powerup(all_powerups)
@@ -125,14 +159,13 @@ class Ball():
         if self.y < max_brick_y + 10:
             # Only check the bricks within a certain distance of the ball
             bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < 1.25*brick_default_width]
-            all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in bricks_to_check]
 
             if 'ball_pass_through' in player.powerups:
                 negate_speed = 1
             else:
                 negate_speed = -1
                 
-            for i, brick_obj in enumerate(bricks_to_check):
+            for brick_obj in bricks_to_check:
                 dont_change_ball_speed = False
                 if len(all_bricks) == 1:
                     if all_bricks[0].health < 3:      # Only change this variable if the brick is destructable (i.e., health 1 or 2)
@@ -146,60 +179,47 @@ class Ball():
                     brick_obj.y + brick_default_height
                 )
 
-                # Check whether there is a brick blocking the current one
-                blocking_alive = (
-                    True if (l, b) in all_bricks_coords else False,
-                    True if (l - brick_default_width, t) in all_bricks_coords else False,
-                    True if (l, t - brick_default_height) in all_bricks_coords else False,
-                    True if (r, t) in all_bricks_coords else False,
-                )
-
-                # Hit brick from below
-                if not blocking_alive[0]:
-                    brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed)
-                    if brick_hit:
-                        break
+                brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed)
+                if brick_hit:
+                    break
 
                 # Hit brick from left side
-                if not blocking_alive[1]:
-                    brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1)
-                    if brick_hit:
-                        break
+                brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1)
+                if brick_hit:
+                    break
 
                 # Hit brick from above
-                if not blocking_alive[2]:
-                    brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed)
-                    if brick_hit: 
-                        break
+                brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed)
+                if brick_hit: 
+                    break
 
                 # Hit brick from right side
-                if not blocking_alive[3]:
-                    brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1)
-                    if brick_hit:
-                        break
+                brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1)
+                if brick_hit:
+                    break
 
         # Collision with walls
         if self.y < 5:
             if self.velocity[1] < 0: # Prevents getting stuck out of bounds
                 self.velocity = (self.velocity[0], -self.velocity[1])
                 play_sound("wall")
-        
-        if self.y + self.height > player_init_y + 20:
-            return "dead", all_bricks
 
-        # If close to either the left or right wall, reflect back
-        in_bounds = 10 <= self.x <= screen_x - 10
+        # If close to either the left or right wall
         close_to_left = self.x < 5
         close_to_right = self.x + self.height > screen_x - 5
-        if not in_bounds:
-            if close_to_left:
-                if self.velocity[0] < 0: # Prevents getting stuck out of bounds
-                    play_sound("wall")
-                    self.velocity = (-self.velocity[0], self.velocity[1])
-            
-            if close_to_right:
-                if self.velocity[0] > 0: # Prevents getting stuck out of bounds
-                    play_sound("wall")
-                    self.velocity = (-self.velocity[0], self.velocity[1])
+        # if self.x
+        if close_to_left:
+            if self.velocity[0] < 0: # Prevents getting stuck out of bounds
+                play_sound("wall")
+                self.velocity = (-self.velocity[0], self.velocity[1])
+
+        elif close_to_right:
+            if self.velocity[0] > 0: # Prevents getting stuck out of bounds
+                play_sound("wall")
+                self.velocity = (-self.velocity[0], self.velocity[1])
+        
+        # Ball died
+        if self.y + self.height > player_init_y + 30:
+            return "dead", all_bricks
 
         return None, all_bricks

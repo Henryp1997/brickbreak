@@ -1,4 +1,5 @@
 import os
+import sys
 
 x_res = 1150
 y_res = int(16 * x_res / 9)
@@ -49,7 +50,6 @@ ball_init_pos = {
     1:  (screen_x*0.6, screen_y/3),
     2:  (screen_x*0.9, screen_y/3),
 }
-ball_init_height = 10
 ball_init_velocity = (-7, 7)
 laser_bolt_init_width = 5
 laser_bolt_init_height = 25
