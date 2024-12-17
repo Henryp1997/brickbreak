@@ -123,7 +123,7 @@ class Ball():
         return brick_hit, all_bricks
 
     def check_collision(self, player, all_bricks, all_powerups, max_brick_y):
-        ball_v_mag = math.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
+        ball_v_mag = self.v_mag()
 
         # collision with paddle
         if abs(self.y + self.height - player.y) < 5:
@@ -207,14 +207,27 @@ class Ball():
         # If close to either the left or right wall
         close_to_left = self.x < 5
         close_to_right = self.x + self.height > screen_x - 5
-        # if self.x
+
         if close_to_left:
-            if self.velocity[0] < 0: # Prevents getting stuck out of bounds
+            wall_pos = 5
+            # Check if x coordinate will be beyond the wall on next frame
+            if (self.x + self.velocity[0]) < wall_pos:
+                # If so, snap ball to the wall and negate x velocity. Move ball along the y direction
+                # the required amount to remain along the same vector that the ball was travelling
+                self.y += (self.velocity[1] / self.velocity[0]) * (wall_pos - self.x)
+                self.x = wall_pos
                 play_sound("wall")
                 self.velocity = (-self.velocity[0], self.velocity[1])
 
         elif close_to_right:
-            if self.velocity[0] > 0: # Prevents getting stuck out of bounds
+            wall_pos = screen_x - 5
+            # Check if x coordinate will be beyond the wall on next frame.
+            # For the right wall we need to check the right edge of the ball
+            if (self.x + self.height + self.velocity[0]) > wall_pos:
+                # If so, snap ball to the wall and negate x velocity. Move ball along the y direction
+                # the required amount to remain along the same vector that the ball was travelling
+                self.y += (self.velocity[1] / self.velocity[0]) * (wall_pos - self.x - self.height)
+                self.x = wall_pos - self.height
                 play_sound("wall")
                 self.velocity = (-self.velocity[0], self.velocity[1])
         
