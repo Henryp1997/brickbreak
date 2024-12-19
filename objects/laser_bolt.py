@@ -1,34 +1,43 @@
 import pygame as pg
-from variables import(
-    laser_bolt_init_width,
-    laser_bolt_init_height,
-    colours,
-    brick_default_width,
-    brick_default_height
+from consts import(
+    LASER_BOLT_INIT_WIDTH,
+    LASER_BOLT_INIT_HEIGHT,
+    COLOURS,
+    BRICK_DEFAULT_WIDTH,
+    BRICK_DEFAULT_HEIGHT
 )
 from utils import play_sound
 
 class Laser():
-    def __init__(self, x, y) -> None:
+    def __init__(self, x, y, artist) -> None:
         self.x, self.y = x, y
+        self.artist = artist
         self.speed = -20
-        self.width, self.height = laser_bolt_init_width, laser_bolt_init_height
+        self.width, self.height = LASER_BOLT_INIT_WIDTH, LASER_BOLT_INIT_HEIGHT
     
-    def draw_laser(self, artist) -> None:
-        pg.draw.rect(artist.screen, colours["ELEC_BLUE"], (self.x, self.y, self.width, self.height))
+
+    def draw_laser(self) -> None:
+        pg.draw.rect(self.artist.screen, COLOURS["ELEC_BLUE"], (self.x, self.y, self.width, self.height))
+
 
     def move(self) -> None:
         self.y += self.speed
     
+
     def check_collision(self, all_bricks, all_powerups, max_brick_y) -> None:
         if self.y > max_brick_y + 20:
             return
         bricks_hit = 0
         for i, brick_obj in enumerate(all_bricks):
             if bricks_hit != 1:
-                l, r, b = (brick_obj.x, brick_obj.x + brick_default_width, brick_obj.y + brick_default_height) # left, right and bottom coords of the brick
-                if abs(self.y - b) < 10:
-                    if l <= self.x <= r:
+                # Left, right and bottom coords of the brick
+                l, r, b = (brick_obj.x, brick_obj.x + BRICK_DEFAULT_WIDTH, brick_obj.y + BRICK_DEFAULT_HEIGHT)
+                
+                # Interpolate laser position to see if collision will happen on next frame
+                if (self.y + self.speed) < b:
+                    if l <= (self.x + self.width) and self.x <= r:
+                        self.y = b # Snap laser to brick bottom
+                        self.draw_laser()
                         bricks_hit = 1
                         if brick_obj.health < 3:
                             brick_obj.health -= 1
@@ -46,5 +55,5 @@ class Laser():
                         if len(all_bricks) == 1:
                             locked_brick = all_bricks[0]
                             if locked_brick.health == 3:
-                                # turn the padlocked brick into a normal 2-health brick
+                                # Turn the padlocked brick into a normal 2-health brick
                                 locked_brick.health -= 1

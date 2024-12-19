@@ -1,17 +1,15 @@
 import time
 import pygame as pg
-from variables import(
-    assets_path,
-    player_default_speed,
-    screen_x,
-    laser_cooldown_time,
-    laser_bolt_init_width,
-    laser_bolt_init_height,
-    player_init_x,
-    player_init_y,
-    player_default_width,
-    player_short,
-    all_widths
+from consts import(
+    ASSETS_PATH,
+    PLAYER_DEFAULT_SPEED,
+    SCREEN_X,
+    LASER_BOLT_INIT_WIDTH,
+    LASER_BOLT_INIT_HEIGHT,
+    PLAYER_INIT_X,
+    PLAYER_INIT_Y,
+    PLAYER_DEFAULT_WIDTH,
+    ALL_PLAYER_WIDTHS
 )
 from utils import play_sound
 from objects.laser_bolt import Laser
@@ -40,7 +38,7 @@ class Paddle():
         self.width, self.height = width, 15
         self.rect_center = (self.x + self.width / 2, self.y + self.height / 2)
         self.lives = lives
-        self.speed = player_default_speed
+        self.speed = PLAYER_DEFAULT_SPEED
         self.height = 15
         self.powerups = powerups
         self.rect = pg.Rect((self.x, self.y), (self.width, self.height))
@@ -49,10 +47,11 @@ class Paddle():
             225: "paddle_long",
             100: "paddle_short"
         }
-        self.image = pg.image.load(f"{assets_path}/player_sprites/paddle.png").convert_alpha()
+        self.image = pg.image.load(f"{ASSETS_PATH}/player_sprites/paddle.png").convert_alpha()
         self.time_got_laser = 0
         self.time_shot_laser = 0
     
+
     def check_movement(self) -> None:
         key = pg.key.get_pressed()
         # Move paddle left or right depending on key press
@@ -62,9 +61,10 @@ class Paddle():
                 self.x -= self.speed
                 self.rect.move_ip(-self.speed, 0)
         if key[pg.K_RIGHT]:
-            if self.x + self.width/2 < screen_x - 5:
+            if self.x + self.width/2 < SCREEN_X - 5:
                 self.x += self.speed
                 self.rect.move_ip(self.speed, 0)
+
 
     def check_laser_press(self, all_lasers) -> "Laser":
         # Generate a laser object if laser key pressed and has powerup
@@ -82,34 +82,39 @@ class Paddle():
         # Generate bolt if all conditions are met
         if key[pg.K_UP] and generate_bolt:
             play_sound("laser_shot")
-            laser_x = self.x + (self.width - laser_bolt_init_width)/2
-            laser_y = self.y - laser_bolt_init_height
-            laser_bolt = Laser(laser_x, laser_y)
+            laser_x = self.x + (self.width - LASER_BOLT_INIT_WIDTH)/2
+            laser_y = self.y - LASER_BOLT_INIT_HEIGHT
+            laser_bolt = Laser(laser_x, laser_y, artist=self.artist)
             self.time_shot_laser = time.time() # Update for cooldown time
             return laser_bolt
+
 
     def draw_paddle(self) -> None:
         self.artist.screen.blit(self.image, (self.x, self.y))
     
+
     def change_sprite(self) -> None:
         new_sprite = self.sprite_dict.get(self.width, None)
-        self.image = pg.image.load(f"{assets_path}/player_sprites/{new_sprite}.png").convert_alpha()
+        self.image = pg.image.load(f"{ASSETS_PATH}/player_sprites/{new_sprite}.png").convert_alpha()
+
 
     def update_powerups(self, powerup) -> None:
         self.powerups.append(powerup)
         self.powerups = list(set(self.powerups))
 
+
     def reset_attributes(self) -> None:
-        self.x, self.y = player_init_x, player_init_y
+        self.x, self.y = PLAYER_INIT_X, PLAYER_INIT_Y
         self.powerups = []
-        self.width = player_default_width
-        self.speed = player_default_speed
+        self.width = PLAYER_DEFAULT_WIDTH
+        self.speed = PLAYER_DEFAULT_SPEED
         self.change_sprite()
+
 
     def change_width(self, width, min_plus_1) -> None:
         width_delta = 0
         if self.width != width:
-            next_size = all_widths[all_widths.index(self.width) + min_plus_1]
+            next_size = ALL_PLAYER_WIDTHS[ALL_PLAYER_WIDTHS.index(self.width) + min_plus_1]
             width_delta = abs(self.width - next_size)
 
         # Update player properties

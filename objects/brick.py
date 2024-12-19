@@ -2,7 +2,7 @@
 
 import random
 import pygame as pg
-from variables import assets_path, all_powerup_types
+from consts import ASSETS_PATH, ALL_POWERUP_TYPES, NUM_POWERUPS
 from objects.powerup import Powerup
 
 class Brick():
@@ -21,28 +21,29 @@ class Brick():
         "image_h2_rect",
         "image_h1_rect"
     ]
-    def __init__(self, artist, x, y, width, height, health):
+    def __init__(self, artist, x, y, width, height, health) -> None:
         self.artist = artist
         self.x, self.y = x, y
         self.width, self.height = width, height
         self.health, self.is_alive = health, True
-        self.image_h3 = pg.image.load(f"{assets_path}/brick_h3.png").convert_alpha()
-        self.image_h2 = pg.image.load(f"{assets_path}/brick_h2.png").convert_alpha()
-        self.image_h1 = pg.image.load(f"{assets_path}/brick_h1.png").convert_alpha()
+        self.image_h3 = pg.image.load(f"{ASSETS_PATH}/brick_h3.png").convert_alpha()
+        self.image_h2 = pg.image.load(f"{ASSETS_PATH}/brick_h2.png").convert_alpha()
+        self.image_h1 = pg.image.load(f"{ASSETS_PATH}/brick_h1.png").convert_alpha()
         self.image_h3_rect = self.image_h3.get_rect(topleft=(self.x, self.y))
         self.image_h2_rect = self.image_h2.get_rect(topleft=(self.x, self.y))
         self.image_h1_rect = self.image_h1.get_rect(topleft=(self.x, self.y))
-        return
 
-    def draw_brick_sprite(self):
+
+    def draw_brick_sprite(self) -> None:
         self.artist.screen.blit(getattr(self, f"image_h{self.health}"), (self.x, self.y))
-        return
 
-    def generate_powerup(self, all_powerups):
+
+    def generate_powerup(self, all_powerups) -> None:
         generate_powerup = random.randint(0, 2)
         if generate_powerup == 0 and self.health < 3:
-            power_type = all_powerup_types[list(all_powerup_types.keys())[random.randint(0, len(all_powerup_types.keys()) - 1)]][0]
-            power_type = 'multi' # for debug
-            power_up = Powerup(self.artist, self.x, self.y, True, power_type)
+            seed = random.randint(0, NUM_POWERUPS - 1)
+            power_type = list(ALL_POWERUP_TYPES.values())[seed][0]
+            power_name = list(ALL_POWERUP_TYPES.keys())[seed]
+            power_type, power_name = "laser", "Laser" # for debug
+            power_up = Powerup(self.artist, self.x, self.y, True, power_name, power_type)
             all_powerups.append(power_up)
-        return

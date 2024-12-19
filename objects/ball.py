@@ -1,13 +1,15 @@
 import pygame as pg
 import math
 import numpy as np
-from variables import (
-    assets_path,
-    player_init_y,
-    screen_x,
-    screen_y,
-    brick_default_width,
-    brick_default_height
+from consts import (
+    ASSETS_PATH,
+    PLAYER_INIT_Y,
+    SCREEN_X,
+    SCREEN_Y,
+    LEFT_WALL_X,
+    RIGHT_WALL_X,
+    BRICK_DEFAULT_WIDTH,
+    BRICK_DEFAULT_HEIGHT
 )
 from utils import play_sound
 
@@ -17,11 +19,13 @@ class Ball():
         self.height = 10
         self.x, self.y = x, y
         self.passthrough = passthrough # Can the ball delete bricks without bouncing (requires powerup)
-        self.image = pg.image.load(f"{assets_path}/player_sprites/ball_default.png").convert_alpha()
-        self.unstop_image = pg.image.load(f"{assets_path}/player_sprites/ball_unstop.png").convert_alpha()
+        self.image = pg.image.load(f"{ASSETS_PATH}/player_sprites/ball_default.png").convert_alpha()
+        self.unstop_image = pg.image.load(f"{ASSETS_PATH}/player_sprites/ball_unstop.png").convert_alpha()
     
+
     def move(self) -> None:
         self.x += self.velocity[0]; self.y += self.velocity[1]
+
 
     def v_mag(self) -> float:
         """ Calculate the magnitude of the ball's velocity """
@@ -33,6 +37,7 @@ class Ball():
         vy = -vmag * np.sin(theta) # Down is increasing y, hence -ve sign
         return vx, vy
     
+
     def v_angle(self) -> float:
         vx, vy = self.velocity
         try:
@@ -57,15 +62,17 @@ class Ball():
         
         return theta
 
+
     def draw_ball(self, artist) -> None:
         img = self.image
         if self.passthrough:
             img = self.unstop_image          
-        if (self.y + self.height) > (player_init_y + round(screen_y / 30)): # Don't draw if in the info bar section of the screen
+        if (self.y + self.height) > (PLAYER_INIT_Y + round(SCREEN_Y / 30)): # Don't draw if in the info bar section of the screen
             return
         artist.screen.blit(img, (self.x, self.y))
         
-    def change_speed_upon_brick_collide(
+
+    def brick_collide(
             self,
             brick_obj, 
             all_bricks, 
@@ -122,11 +129,79 @@ class Ball():
             brick_obj.generate_powerup(all_powerups)
         return brick_hit, all_bricks
 
+
+    def wall_collide(self, wall_x, sign=1, width_adjustment=0):
+        """ Control collisions with the left or right wall """
+        # Check if x coordinate will be beyond the wall on next frame
+        if sign * (self.x + self.velocity[0] + width_adjustment) < (sign * wall_x):
+            # If so, snap ball to the wall and negate x velocity. Move ball along the y direction
+            # the required amount to remain along the same vector that the ball was travelling
+            self.y += (self.velocity[1] / self.velocity[0]) * (wall_x - self.x - width_adjustment)
+            self.x = wall_x - width_adjustment
+            play_sound("wall")
+            self.velocity = (-self.velocity[0], self.velocity[1])
+
+
+    def ceiling_collide(self, ceiling_y=5):
+        """ Control collisions with the ceiling """
+        # Check if y coordinate will be above the ceiling on next frame. Upwards is negative y
+        if (self.y + self.velocity[1]) < ceiling_y:
+            # If so, snap ball to the ceiling and negate y velocity. Move ball along the x direction
+            # the required amount to remain along the same vector that the ball was travelling
+            self.x += (self.velocity[0] / -self.velocity[1]) * (self.y - ceiling_y)
+            self.y = ceiling_y
+            play_sound("wall")
+            self.velocity = (self.velocity[0], -self.velocity[1])
+
+
     def check_collision(self, player, all_bricks, all_powerups, max_brick_y):
         ball_v_mag = self.v_mag()
 
+        # Collision with brick. Only check if close enough to the lowest brick
+        if self.y < max_brick_y + 10:
+            # Only check the bricks within a certain distance of the ball
+            bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < 1.25*BRICK_DEFAULT_WIDTH]
+
+            if 'ball_pass_through' in player.powerups:
+                negate_speed = 1
+            else:
+                negate_speed = -1
+                
+            for brick_obj in bricks_to_check:
+                dont_change_ball_speed = False
+                if len(all_bricks) == 1:
+                    if all_bricks[0].health < 3:      # Only change this variable if the brick is destructable (i.e., health 1 or 2)
+                        dont_change_ball_speed = True # This variable prevents bugs when the ball is carried through to a new level
+
+                # Left, right, top and bottom coords of the brick
+                l, r, t, b = (
+                    brick_obj.x, 
+                    brick_obj.x + BRICK_DEFAULT_WIDTH, 
+                    brick_obj.y, 
+                    brick_obj.y + BRICK_DEFAULT_HEIGHT
+                )
+
+                brick_hit, all_bricks = self.brick_collide(brick_obj, all_bricks, all_powerups, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed)
+                if brick_hit:
+                    break
+
+                # Hit brick from left side
+                brick_hit, all_bricks = self.brick_collide(brick_obj, all_bricks, all_powerups, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1)
+                if brick_hit:
+                    break
+
+                # Hit brick from above
+                brick_hit, all_bricks = self.brick_collide(brick_obj, all_bricks, all_powerups, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed)
+                if brick_hit: 
+                    break
+
+                # Hit brick from right side
+                brick_hit, all_bricks = self.brick_collide(brick_obj, all_bricks, all_powerups, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1)
+                if brick_hit:
+                    break
+
         # collision with paddle
-        if abs(self.y + self.height - player.y) < 5:
+        if (self.y + self.height) > (player.y - 5):
             # calculate what the angle of reflection should be when hitting the paddle
             # this should vary from 90 deg if the ball hits the centre to almost zero if the ball hits the edges
             relative_x = self.x - player.x + self.height
@@ -146,93 +221,28 @@ class Ball():
                         negate_speed*ball_v_mag*np.cos(angle),
                         -ball_v_mag*np.sin(angle)
                     )
-                    return None, all_bricks
                 elif self.velocity[0] < 0:
                     play_sound("bounce")
                     self.velocity = (
                         negate_speed*ball_v_mag*np.cos(angle),
                         -ball_v_mag*np.sin(angle)
                     )
-                    return None, all_bricks
-
-        # Collision with brick. Only check if close enough to the lowest brick
-        if self.y < max_brick_y + 10:
-            # Only check the bricks within a certain distance of the ball
-            bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < 1.25*brick_default_width]
-
-            if 'ball_pass_through' in player.powerups:
-                negate_speed = 1
-            else:
-                negate_speed = -1
-                
-            for brick_obj in bricks_to_check:
-                dont_change_ball_speed = False
-                if len(all_bricks) == 1:
-                    if all_bricks[0].health < 3:      # Only change this variable if the brick is destructable (i.e., health 1 or 2)
-                        dont_change_ball_speed = True # This variable prevents bugs when the ball is carried through to a new level
-
-                # Left, right, top and bottom coords of the brick
-                l, r, t, b = (
-                    brick_obj.x, 
-                    brick_obj.x + brick_default_width, 
-                    brick_obj.y, 
-                    brick_obj.y + brick_default_height
-                )
-
-                brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed)
-                if brick_hit:
-                    break
-
-                # Hit brick from left side
-                brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1)
-                if brick_hit:
-                    break
-
-                # Hit brick from above
-                brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed)
-                if brick_hit: 
-                    break
-
-                # Hit brick from right side
-                brick_hit, all_bricks = self.change_speed_upon_brick_collide(brick_obj, all_bricks, all_powerups, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1)
-                if brick_hit:
-                    break
 
         # Collision with walls
-        if self.y < 5:
-            if self.velocity[1] < 0: # Prevents getting stuck out of bounds
-                self.velocity = (self.velocity[0], -self.velocity[1])
-                play_sound("wall")
+        close_to_top = self.y < 5
+        if close_to_top:
+            self.ceiling_collide()
 
         # If close to either the left or right wall
         close_to_left = self.x < 5
-        close_to_right = self.x + self.height > screen_x - 5
-
+        close_to_right = self.x + self.height > SCREEN_X - 5
         if close_to_left:
-            wall_pos = 5
-            # Check if x coordinate will be beyond the wall on next frame
-            if (self.x + self.velocity[0]) < wall_pos:
-                # If so, snap ball to the wall and negate x velocity. Move ball along the y direction
-                # the required amount to remain along the same vector that the ball was travelling
-                self.y += (self.velocity[1] / self.velocity[0]) * (wall_pos - self.x)
-                self.x = wall_pos
-                play_sound("wall")
-                self.velocity = (-self.velocity[0], self.velocity[1])
-
+            self.wall_collide(wall_x=LEFT_WALL_X)
         elif close_to_right:
-            wall_pos = screen_x - 5
-            # Check if x coordinate will be beyond the wall on next frame.
-            # For the right wall we need to check the right edge of the ball
-            if (self.x + self.height + self.velocity[0]) > wall_pos:
-                # If so, snap ball to the wall and negate x velocity. Move ball along the y direction
-                # the required amount to remain along the same vector that the ball was travelling
-                self.y += (self.velocity[1] / self.velocity[0]) * (wall_pos - self.x - self.height)
-                self.x = wall_pos - self.height
-                play_sound("wall")
-                self.velocity = (-self.velocity[0], self.velocity[1])
+            self.wall_collide(wall_x=RIGHT_WALL_X, width_adjustment=self.height, sign=-1)
         
         # Ball died
-        if self.y + self.height > player_init_y + 30:
+        if self.y + self.height > PLAYER_INIT_Y + 30:
             return "dead", all_bricks
 
         return None, all_bricks

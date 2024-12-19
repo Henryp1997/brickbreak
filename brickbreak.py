@@ -2,7 +2,7 @@ import pygame as pg
 from pygame.locals import KEYDOWN, KMOD_SHIFT, K_ESCAPE, K_SPACE, K_k, QUIT
 import sys
 import time
-from variables import *
+from consts import *
 from levels import generate_brick_coords
 from utils import play_sound
 from objects.artist import Artist
@@ -15,22 +15,22 @@ pg.display.set_caption("Brickbreaker")
 
 
 def generate_level(artist, level):
-    brick_coords, brick_default_width, brick_default_height, max_brick_y = generate_brick_coords(level)
+    brick_coords, BRICK_DEFAULT_WIDTH, BRICK_DEFAULT_HEIGHT, max_brick_y = generate_brick_coords(level)
     all_bricks = [
         Brick(
             artist,
             coords[0], 
             coords[1], 
-            width=brick_default_width, 
-            height=brick_default_height, 
+            width=BRICK_DEFAULT_WIDTH, 
+            height=BRICK_DEFAULT_HEIGHT, 
             health=coords[4], 
         ) for coords in brick_coords
     ]
     all_balls = [
         Ball(
-            x=ball_init_pos[level][0], 
-            y=ball_init_pos[level][1], 
-            velocity=ball_init_velocity, 
+            x=BALL_INIT_POS[level][0], 
+            y=BALL_INIT_POS[level][1], 
+            velocity=BALL_INIT_VELOCITY, 
             passthrough=False
         )
     ]
@@ -42,16 +42,16 @@ def initialise_objects(artist, level):
     # Create objects
     player = Paddle(
         artist=artist,
-        x=player_init_x,
-        y=player_init_y,
-        width=player_default_width,
+        x=PLAYER_INIT_X,
+        y=PLAYER_INIT_Y,
+        width=PLAYER_DEFAULT_WIDTH,
         powerups=[],
         lives=3
     )
     ball_obj = Ball(
-        x=ball_init_pos[level][0],
-        y=ball_init_pos[level][1],
-        velocity=ball_init_velocity,
+        x=BALL_INIT_POS[level][0],
+        y=BALL_INIT_POS[level][1],
+        velocity=BALL_INIT_VELOCITY,
         passthrough=False
     )
 
@@ -88,8 +88,8 @@ def start_game():
 
     # Create object for drawing things to the screen
     artist = Artist(
-        screen_x=screen_x,
-        screen_y=screen_y,
+        SCREEN_X=SCREEN_X,
+        SCREEN_Y=SCREEN_Y,
         start_or_retry="start"
     )
 
@@ -99,7 +99,7 @@ def start_game():
         clock.tick(60)
         
         # Reset screen contents
-        artist.fill_screen(colour=colours["BLACK"])
+        artist.fill_screen(colour=COLOURS["BLACK"])
 
         if init_everything:
             all_lasers, all_bricks, all_powerups = [], [], []
@@ -109,7 +109,7 @@ def start_game():
             pg.display.update()
        
         elif not init_everything:
-            artist.draw_border(colour=colours['GREY2'])
+            artist.draw_border(colour=COLOURS['GREY2'])
 
             completed_level = len(all_bricks) == 0
             try:
@@ -177,8 +177,8 @@ def start_game():
 
             ### MAIN GAME LOOP ###
             if revive_ball or restart:
-                ball_obj.x, ball_obj.y = ball_init_pos[level]
-                ball_obj.velocity = ball_init_velocity
+                ball_obj.x, ball_obj.y = BALL_INIT_POS[level]
+                ball_obj.velocity = BALL_INIT_VELOCITY
                 ball_obj.passthrough = False
                 all_balls.append(ball_obj)
                 revive_ball, restart = False, False
@@ -197,7 +197,7 @@ def start_game():
 
                 # Move laser bolts
                 for i, bolt in enumerate(all_lasers):
-                    bolt.draw_laser(artist)
+                    bolt.draw_laser()
                     bolt.move()
                     dead = bolt.check_collision(all_bricks, all_powerups, max_brick_y)
                     if dead == "dead":
@@ -227,7 +227,7 @@ def start_game():
                 artist.draw_info_bar(player.lives, player.powerups, player.width)
 
             # Only update playable area. Info bar will be updated in relevant sections if required
-            pg.display.update((0, 0, artist.screen_x, info_bar_start))
+            pg.display.update((0, 0, artist.SCREEN_X, INFO_BAR_START))
 
             # Check for special key combinations
             restart, init_everything, all_bricks = check_system_keys(restart, init_everything, all_bricks)

@@ -1,17 +1,16 @@
 import pygame as pg
 import math
 import time
-import copy
 import numpy as np
-from variables import(
-    brick_default_width,
-    brick_default_height,
-    all_powerup_types,
-    assets_path,
-    player_init_y,
-    player_long,
-    player_short,
-    player_fast_speed,
+from consts import(
+    BRICK_DEFAULT_WIDTH,
+    BRICK_DEFAULT_HEIGHT,
+    ALL_POWERUP_TYPES,
+    ASSETS_PATH,
+    PLAYER_INIT_Y,
+    PLAYER_LONG,
+    PLAYER_SHORT,
+    PLAYER_FAST_SPEED,
 )
 from objects.ball import Ball
 
@@ -27,58 +26,58 @@ class Powerup():
         "power_type",
         "image"
     ]
-    def __init__(self, artist, x, y, is_alive, power_type):
+    def __init__(self, artist, x, y, is_alive, power_name, power_type) -> None:
         self.artist = artist
         self.x, self.y = x, y
-        self.width, self.height = brick_default_width, brick_default_height
+        self.width, self.height = BRICK_DEFAULT_WIDTH, BRICK_DEFAULT_HEIGHT
         self.speed = 3
         self.is_alive = is_alive
         self.power_type = power_type
-        img_name = all_powerup_types[list(all_powerup_types.keys())[[j[0] for i, j in enumerate(list(all_powerup_types.values()))].index(power_type)]][2]
-        self.image = pg.image.load(f"{assets_path}/powerup_sprites/{img_name}.png").convert_alpha()
-        return
+        img_name = ALL_POWERUP_TYPES[power_name][2]
+        self.image = pg.image.load(f"{ASSETS_PATH}/powerup_sprites/{img_name}.png").convert_alpha()
 
-    def move(self, artist, all_powerups):
+
+    def move(self, artist, all_powerups) -> None:
         self.y += self.speed
-        if self.y > player_init_y - 5:
+        if self.y > PLAYER_INIT_Y - 5:
             self.is_alive = False # kill the powerup object
             all_powerups.pop(all_powerups.index(self))
         artist.screen.blit(self.image, (self.x, self.y))
-        return
     
-    def check_gained_powerup(self, player, old_balls_list, all_powerups):
+
+    def check_gained_powerup(self, player, old_balls_list, all_powerups) -> tuple:
         new_balls_list = []
 
         # Only check collision with player if close to the paddle
-        if self.y > player_init_y - 20:
+        if self.y > PLAYER_INIT_Y - 20:
             grabbed_powerup = (self.x + self.width) >= player.x and self.x <= (player.x + player.width)
             if grabbed_powerup:
                 # powerups changing paddle properties
-                if self.power_type == 'paddle_size_up':
-                    player.change_width(width=player_long, min_plus_1=+1)
+                if self.power_type == "paddle_size_up":
+                    player.change_width(width=PLAYER_LONG, min_plus_1=+1)
                     new_balls_list = old_balls_list
 
-                elif self.power_type == 'paddle_size_down':
-                    player.change_width(width=player_short, min_plus_1=-1)
+                elif self.power_type == "paddle_size_down":
+                    player.change_width(width=PLAYER_SHORT, min_plus_1=-1)
                     new_balls_list = old_balls_list
 
-                elif self.power_type == 'paddle_speed':
-                    player.speed = player_fast_speed
+                elif self.power_type == "paddle_speed":
+                    player.speed = PLAYER_FAST_SPEED
                     player.update_powerups("paddle_speed")
                     new_balls_list = old_balls_list
 
-                elif self.power_type == 'laser':
+                elif self.power_type == "laser":
                     player.time_got_laser = time.time() # Record the time the player got the laser powerup
                     player.update_powerups("laser")
                     new_balls_list = old_balls_list
 
-                elif self.power_type == 'extra_life':                   
+                elif self.power_type == "extra_life":                   
                     player.lives += 1
                     new_balls_list = old_balls_list
 
                 # powerups changing ball properties
                 # even though we're considering the ball here, still store powerups in the player object
-                elif self.power_type == 'ball_speed':
+                elif self.power_type == "ball_speed":
                     # Ball velocity magnitude
                     for ball_obj in old_balls_list:
 
@@ -91,13 +90,13 @@ class Powerup():
                         new_balls_list.append(ball_obj)
                     player.update_powerups("ball_speed")
 
-                elif self.power_type == 'ball_pass_through':
+                elif self.power_type == "ball_pass_through":
                     for ball_obj in old_balls_list:
                         ball_obj.passthrough = True
                         new_balls_list.append(ball_obj)
                     player.update_powerups("ball_pass_through") 
 
-                elif self.power_type == 'multi':
+                elif self.power_type == "multi":
                     for ball_obj in old_balls_list:
                         new_balls_list.append(ball_obj)
 
@@ -120,7 +119,7 @@ class Powerup():
                             new_balls_list.append(new_ball)
    
                     player.update_powerups("multi")
-        
+
                 self.is_alive = False # kill the powerup object
                 all_powerups.pop(all_powerups.index(self))
 

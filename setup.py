@@ -1,5 +1,5 @@
 import cx_Freeze
-from variables import assets_path
+from consts import ASSETS_PATH
 import os
 
 executables = [
@@ -14,7 +14,7 @@ cx_Freeze.setup(
     name="Brickbreaker",
     options={
         "build_exe": {
-            "include_files": [(assets_path, "assets")]
+            "include_files": [(ASSETS_PATH, "assets")]
         }
     },
     executables=executables

@@ -1,5 +1,5 @@
 import pygame as pg
-from variables import assets_path
+from consts import ASSETS_PATH
 
 def play_sound(sound) -> None:
-    pg.mixer.Sound.play(pg.mixer.Sound(f"{assets_path}/{sound}.wav"))
+    pg.mixer.Sound.play(pg.mixer.Sound(f"{ASSETS_PATH}/{sound}.wav"))
