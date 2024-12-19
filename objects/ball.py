@@ -70,46 +70,10 @@ class Ball():
         if (self.y + self.height) > (PLAYER_INIT_Y + round(SCREEN_Y / 30)): # Don't draw if in the info bar section of the screen
             return
         artist.screen.blit(img, (self.x, self.y))
-        
+    
 
-    def brick_collide(
-            self,
-            brick_obj, 
-            all_bricks, 
-            all_powerups, 
-            brick_boundaries, 
-            direction,              # 0: up 1: right 2: down 3: left
-            dont_change_ball_speed, 
-            negate_speed_x, 
-            negate_speed_y
-        ) -> None:
-        # Coords to check boundaries
-        coords = (
-            (self.y,               self.x + self.height, self.x),
-            (self.x + self.height, self.y + self.height, self.y),
-            (self.y + self.height, self.x + self.height, self.x),
-            (self.x,               self.y + self.height, self.y)
-        )
-        # Speeds to check direction of ball
-        speeds = (
-            (+self.velocity[1]), 
-            (-self.velocity[0]), 
-            (-self.velocity[1]), 
-            (+self.velocity[0])
-        )
-        brick_hit = False
-        if abs(coords[direction][0] - brick_boundaries[0]) < 10: # Currently uses buffer size of 10 to check collisions. TODO
-            if brick_boundaries[1] <= coords[direction][1] and coords[direction][2] <= brick_boundaries[2]:
-                if speeds[direction] < 0:
-                    if not dont_change_ball_speed:
-                        if direction in [0, 2]:
-                            if negate_speed_y == 1 and brick_obj.health > 1:
-                                negate_speed_y *= -1
-                        elif direction in [1, 3]:
-                            if negate_speed_x == 1 and brick_obj.health > 1:
-                                negate_speed_x *= -1
-                        self.velocity = (negate_speed_x*self.velocity[0], negate_speed_y*self.velocity[1])
-                    brick_hit = True 
+    def update_bricks(self, all_bricks, all_powerups, brick_obj, brick_hit) -> None:
+        """ brick_obj is the brick object that was hit """
         if brick_hit:
             if brick_obj.health < 3:
                 brick_obj.health -= 1
@@ -127,7 +91,70 @@ class Ball():
                     locked_brick.health -= 1
 
             brick_obj.generate_powerup(all_powerups)
-        return brick_hit, all_bricks
+
+
+    def brick_collide_vertical(
+        self,
+        brick_obj,
+        y_lim,
+        x_lim1,
+        x_lim2, 
+        negate_speed,
+        height_adjustment=0
+    ) -> bool:
+        if abs(self.y + height_adjustment - y_lim) < 10:
+            if x_lim1 <= (self.x + self.height) and self.x <= x_lim2:
+                if negate_speed == 1 and brick_obj.health > 1:
+                    negate_speed *= -1
+                self.velocity = (self.velocity[0], negate_speed * self.velocity[1])
+                return True
+        return False
+    
+
+    def brick_collide_horizontal(
+        self,
+        brick_obj,
+        x_lim,
+        y_lim1,
+        y_lim2,
+        negate_speed,
+        width_adjustment=0,
+    ) -> bool:
+        if abs(self.x + width_adjustment - x_lim) < 10:
+            # Check y positioning. Downwards is negative y
+            if y_lim1 >= (self.y + self.height) and self.y >= y_lim2:
+                if negate_speed == 1 and brick_obj.health > 1:
+                    negate_speed *= -1
+                self.velocity = (negate_speed * self.velocity[0], self.velocity[1])
+                return True
+        return False
+
+    def paddle_collide(self, ball_v_mag, player) -> None:
+        """ Calculate what the angle of reflection should be when hitting the paddle.
+            This should vary from 90 deg if the ball hits the centre to 20 degrees if the ball hits the edges """
+        relative_x = self.x - player.x + self.height
+        if -10 <= relative_x <= player.width + 10: # does it hit the paddle at this y coord
+            angle_min = 20
+            grad = 2 * ((90 - angle_min) / player.width)
+            intercept = angle_min
+            negate_speed = -1
+            if relative_x > 0.5*(player.width - self.height):
+                relative_x = player.width - relative_x
+                negate_speed = 1
+
+            angle = ((grad * relative_x) + intercept) * np.pi/180
+            if self.velocity[0] > 0:
+                play_sound("bounce")
+                self.velocity = (
+                    negate_speed*ball_v_mag*np.cos(angle),
+                    -ball_v_mag*np.sin(angle)
+                )
+            elif self.velocity[0] < 0:
+                play_sound("bounce")
+                self.velocity = (
+                    negate_speed*ball_v_mag*np.cos(angle),
+                    -ball_v_mag*np.sin(angle)
+                )
 
 
     def wall_collide(self, wall_x, sign=1, width_adjustment=0):
@@ -154,7 +181,7 @@ class Ball():
             self.velocity = (self.velocity[0], -self.velocity[1])
 
 
-    def check_collision(self, player, all_bricks, all_powerups, max_brick_y):
+    def check_collision(self, player, all_bricks, all_powerups, max_brick_y) -> tuple:
         ball_v_mag = self.v_mag()
 
         # Collision with brick. Only check if close enough to the lowest brick
@@ -168,11 +195,6 @@ class Ball():
                 negate_speed = -1
                 
             for brick_obj in bricks_to_check:
-                dont_change_ball_speed = False
-                if len(all_bricks) == 1:
-                    if all_bricks[0].health < 3:      # Only change this variable if the brick is destructable (i.e., health 1 or 2)
-                        dont_change_ball_speed = True # This variable prevents bugs when the ball is carried through to a new level
-
                 # Left, right, top and bottom coords of the brick
                 l, r, t, b = (
                     brick_obj.x, 
@@ -181,52 +203,30 @@ class Ball():
                     brick_obj.y + BRICK_DEFAULT_HEIGHT
                 )
 
-                brick_hit, all_bricks = self.brick_collide(brick_obj, all_bricks, all_powerups, [b, l, r], 0, dont_change_ball_speed, 1, negate_speed)
-                if brick_hit:
-                    break
+                brick_hit = False
+                # Hit brick from bottom. Only check if moving upwards
+                if self.velocity[1] < 0:
+                    brick_hit = self.brick_collide_vertical(brick_obj, b, l, r, negate_speed)
 
-                # Hit brick from left side
-                brick_hit, all_bricks = self.brick_collide(brick_obj, all_bricks, all_powerups, [l, t, b], 1, dont_change_ball_speed, negate_speed, 1)
-                if brick_hit:
-                    break
+                # Hit brick from above. Only check if moving downwards
+                if not brick_hit and self.velocity[1] > 0:
+                    brick_hit = self.brick_collide_vertical(brick_obj, t, l, r, negate_speed, height_adjustment=self.height)
 
-                # Hit brick from above
-                brick_hit, all_bricks = self.brick_collide(brick_obj, all_bricks, all_powerups, [t, l, r], 2, dont_change_ball_speed, 1, negate_speed)
-                if brick_hit: 
-                    break
+                # Hit brick from left side. Only check if moving right
+                if not brick_hit and self.velocity[0] > 0:
+                    brick_hit = self.brick_collide_horizontal(brick_obj, l, b, t, negate_speed, width_adjustment=self.height)
 
-                # Hit brick from right side
-                brick_hit, all_bricks = self.brick_collide(brick_obj, all_bricks, all_powerups, [r, t, b], 3, dont_change_ball_speed, negate_speed, 1)
+                if not brick_hit and self.velocity[0] < 0:
+                    # Hit brick from right side
+                    brick_hit = self.brick_collide_horizontal(brick_obj, r, b, t, negate_speed)
+                
                 if brick_hit:
-                    break
+                    self.update_bricks(all_bricks, all_powerups, brick_obj, brick_hit)
+                    return None, all_bricks
 
         # collision with paddle
         if (self.y + self.height) > (player.y - 5):
-            # calculate what the angle of reflection should be when hitting the paddle
-            # this should vary from 90 deg if the ball hits the centre to almost zero if the ball hits the edges
-            relative_x = self.x - player.x + self.height
-            if -10 <= relative_x <= player.width + 10: # does it hit the paddle at this y coord
-                angle_min = 20
-                grad = 2 * ((90 - angle_min) / player.width)
-                intercept = angle_min
-                negate_speed = -1
-                if relative_x > 0.5*(player.width - self.height):
-                    relative_x = player.width - relative_x
-                    negate_speed = 1
-
-                angle = ((grad * relative_x) + intercept) * np.pi/180
-                if self.velocity[0] > 0:
-                    play_sound("bounce")
-                    self.velocity = (
-                        negate_speed*ball_v_mag*np.cos(angle),
-                        -ball_v_mag*np.sin(angle)
-                    )
-                elif self.velocity[0] < 0:
-                    play_sound("bounce")
-                    self.velocity = (
-                        negate_speed*ball_v_mag*np.cos(angle),
-                        -ball_v_mag*np.sin(angle)
-                    )
+            self.paddle_collide(ball_v_mag, player)
 
         # Collision with walls
         close_to_top = self.y < 5
