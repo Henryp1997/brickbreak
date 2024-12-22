@@ -188,6 +188,7 @@ class Ball():
         if self.y < max_brick_y + 10:
             # Only check the bricks within a certain distance of the ball
             bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < 1.25*BRICK_DEFAULT_WIDTH]
+            all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in bricks_to_check]
 
             if 'ball_pass_through' in player.powerups:
                 negate_speed = 1
@@ -203,20 +204,28 @@ class Ball():
                     brick_obj.y + BRICK_DEFAULT_HEIGHT
                 )
 
+                # Check whether there is a brick blocking the current one
+                neighbours_alive = (
+                    True if (l, b) in all_bricks_coords else False,
+                    True if (l, t - BRICK_DEFAULT_HEIGHT) in all_bricks_coords else False,
+                    True if (l - BRICK_DEFAULT_WIDTH, t) in all_bricks_coords else False,
+                    True if (r, t) in all_bricks_coords else False
+                )
+
                 brick_hit = False
                 # Hit brick from bottom. Only check if moving upwards
-                if self.velocity[1] < 0:
+                if not neighbours_alive[0] and self.velocity[1] < 0:
                     brick_hit = self.brick_collide_vertical(brick_obj, b, l, r, negate_speed)
 
                 # Hit brick from above. Only check if moving downwards
-                if not brick_hit and self.velocity[1] > 0:
+                if not neighbours_alive[1] and not brick_hit and self.velocity[1] > 0:
                     brick_hit = self.brick_collide_vertical(brick_obj, t, l, r, negate_speed, height_adjustment=self.height)
 
                 # Hit brick from left side. Only check if moving right
-                if not brick_hit and self.velocity[0] > 0:
+                if not neighbours_alive[2] and not brick_hit and self.velocity[0] > 0:
                     brick_hit = self.brick_collide_horizontal(brick_obj, l, b, t, negate_speed, width_adjustment=self.height)
 
-                if not brick_hit and self.velocity[0] < 0:
+                if not neighbours_alive[3] and not brick_hit and self.velocity[0] < 0:
                     # Hit brick from right side
                     brick_hit = self.brick_collide_horizontal(brick_obj, r, b, t, negate_speed)
                 
@@ -224,9 +233,11 @@ class Ball():
                     self.update_bricks(all_bricks, all_powerups, brick_obj, brick_hit)
                     return None, all_bricks
 
-        # collision with paddle
+        # Collision with paddle
         if (self.y + self.height) > (player.y - 5):
-            self.paddle_collide(ball_v_mag, player)
+            if self.velocity[1] > 0:
+                # Only check for paddle collisions if moving downards (prevents weird multi collisions)    
+                self.paddle_collide(ball_v_mag, player)
 
         # Collision with walls
         close_to_top = self.y < 5
