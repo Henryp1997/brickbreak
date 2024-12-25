@@ -1,10 +1,13 @@
 import os
 import sys
+import math
 
-X_RES    = 1150
-Y_RES    = int(16 * X_RES / 9)
-SCREEN_X = int(0.75 * X_RES)
-SCREEN_Y = int(SCREEN_X * (9 / 10))
+def get_x_component(y_vel):
+    return math.sqrt(BALL_DEFAULT_VELOCITY[0]**2 + BALL_DEFAULT_VELOCITY[1]**2 - y_vel**2)
+    
+
+SCREEN_X = 920
+SCREEN_Y = 750
  
 COLOURS = {
     "BLUE":      "#0064C8",
@@ -54,13 +57,21 @@ PLAYER_INIT_X = (SCREEN_X - PLAYER_DEFAULT_WIDTH) / 2
 PLAYER_INIT_Y = SCREEN_Y * (15 / 18)
 
 BALL_INIT_POS = {
-    -1: (SCREEN_X*0.7, SCREEN_Y/3),
+   -1:  (SCREEN_X*0.7, SCREEN_Y/3),
     0:  (SCREEN_X*0.7, SCREEN_Y/3),
-    1:  (SCREEN_X*0.6, SCREEN_Y/3),
+    1:  (SCREEN_X*0.65, SCREEN_Y/2.5),
     2:  (SCREEN_X*0.9, SCREEN_Y/3),
+    3:  (SCREEN_X*0.9, SCREEN_Y/3),
 }
 
-BALL_INIT_VELOCITY     = (-7, 7)
+BALL_DEFAULT_VELOCITY = (-7, 7)
+BALL_INIT_VELOCITY = {
+   -1:  BALL_DEFAULT_VELOCITY,
+    0:  BALL_DEFAULT_VELOCITY,
+    1:  (-get_x_component(8), 8),
+    2:  BALL_DEFAULT_VELOCITY,
+    3:  BALL_DEFAULT_VELOCITY,
+}
 LASER_BOLT_INIT_WIDTH  = 5
 LASER_BOLT_INIT_HEIGHT = 25
 LASER_COOLDOWN_TIME    = 50 # time in frames

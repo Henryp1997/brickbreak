@@ -15,7 +15,7 @@ pg.display.set_caption("Brickbreaker")
 
 
 def generate_level(artist, level):
-    brick_coords, BRICK_DEFAULT_WIDTH, BRICK_DEFAULT_HEIGHT, max_brick_y = generate_brick_coords(level)
+    brick_coords, max_brick_y = generate_brick_coords(level)
     all_bricks = [
         Brick(
             artist,
@@ -23,14 +23,14 @@ def generate_level(artist, level):
             coords[1], 
             width=BRICK_DEFAULT_WIDTH, 
             height=BRICK_DEFAULT_HEIGHT, 
-            health=coords[4], 
+            health=coords[2], 
         ) for coords in brick_coords
     ]
     all_balls = [
         Ball(
             x=BALL_INIT_POS[level][0], 
             y=BALL_INIT_POS[level][1], 
-            velocity=BALL_INIT_VELOCITY, 
+            velocity=BALL_INIT_VELOCITY[level], 
             passthrough=False
         )
     ]
@@ -51,7 +51,7 @@ def initialise_objects(artist, level):
     ball_obj = Ball(
         x=BALL_INIT_POS[level][0],
         y=BALL_INIT_POS[level][1],
-        velocity=BALL_INIT_VELOCITY,
+        velocity=BALL_INIT_VELOCITY[level],
         passthrough=False
     )
 
@@ -103,7 +103,7 @@ def start_game():
 
         if init_everything:
             all_lasers, all_bricks, all_powerups = [], [], []
-            level, levels_cleared = 0, 0
+            level, levels_cleared = 1, 0
             revive_ball, restart, init_everything = False, False, False
             player, ball_obj = initialise_objects(artist, level)
             pg.display.update()
@@ -178,7 +178,7 @@ def start_game():
             ### MAIN GAME LOOP ###
             if revive_ball or restart:
                 ball_obj.x, ball_obj.y = BALL_INIT_POS[level]
-                ball_obj.velocity = BALL_INIT_VELOCITY
+                ball_obj.velocity = BALL_INIT_VELOCITY[level]
                 ball_obj.passthrough = False
                 all_balls.append(ball_obj)
                 revive_ball, restart = False, False

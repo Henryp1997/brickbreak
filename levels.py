@@ -6,43 +6,44 @@ def generate_brick_coords(level):
         0:  level0,
         1:  level1,
         2:  level2,
-        # 3:  level3
+        3:  level3
     }
     brick_coords = level_dict[level]()
-    max_brick_y = max([i[3] for i in brick_coords])
-    return brick_coords, BRICK_DEFAULT_WIDTH, BRICK_DEFAULT_HEIGHT, max_brick_y
+    max_brick_y = 0
+    for i in brick_coords:
+        # Add 5 to account for ceiling thickness
+        y_height = (i[1] + 1) * BRICK_DEFAULT_HEIGHT + 5
+        if y_height > max_brick_y:
+            max_brick_y = y_height
+    
+    return brick_coords, max_brick_y
     
 
 def debuglevel() -> list:
-    return [(400, 400, 470, 430, 1)]  
+    return [(0, 1, 1)]
 
 
 def level0() -> list:
     brick_coords = []
-    y_start = 80
-    x_start = round((SCREEN_X - 700)/2)
+    y_start = 2 # Two grid spaces above first row
+    x_start = 1 # One grid space left and right of rows
     n_rows = 3
-    for y in range(y_start, y_start + BRICK_DEFAULT_HEIGHT*(n_rows), BRICK_DEFAULT_HEIGHT):
-        for x in range(x_start, x_start + 700, BRICK_DEFAULT_WIDTH):
-            brick_coords.append([x, y, x + BRICK_DEFAULT_WIDTH, y + BRICK_DEFAULT_HEIGHT, 1]) # left, top, right, bottom
+    n_cols = 11
+    for y in range(y_start, n_rows + y_start):
+        for x in range(x_start, n_cols + x_start):
+            brick_coords.append([x, y, 1]) # Top left corner (x, y) and health (1)
     return brick_coords
+
 
 def level1() -> list:
     brick_coords = []
-    y_start = 60
-    x_start = round((SCREEN_X - 700)/4)
-    x_start_from_right = SCREEN_X - x_start - BRICK_DEFAULT_WIDTH
-    n_rows = 10
-    for y in range(y_start, y_start + BRICK_DEFAULT_HEIGHT*(n_rows), BRICK_DEFAULT_HEIGHT):
-        for i, x in enumerate(range(x_start, x_start + 175, BRICK_DEFAULT_WIDTH)):
-            if i == 0:
-                continue
-            brick_coords.append([x, y, x + BRICK_DEFAULT_WIDTH, y + BRICK_DEFAULT_HEIGHT]) # left, top, right, bottom
-        for i, x in enumerate(range(x_start_from_right, x_start_from_right - 175, -BRICK_DEFAULT_WIDTH)):
-            if i == 0:
-                continue
-            brick_coords.append([x, y, x + BRICK_DEFAULT_WIDTH, y + BRICK_DEFAULT_HEIGHT]) # left, top, right, bottom
-    
+    y_start = 2
+    n_rows = 11
+    n_cols = 13
+    for y in range(y_start, n_rows + y_start):
+        for x in range(n_cols):
+            if x in [2, 3, 9, 10]:
+                brick_coords.append([x, y])
     l = [i[0] for i in brick_coords][0:4]
     l.sort()
     
@@ -51,13 +52,16 @@ def level1() -> list:
             coords.append(2)
         else:
             coords.append(1)
+
+    for coords in [(6, 6, 1), (5, 7, 1), (7, 7, 1), (6, 7, 2), (6, 8, 1)]:
+        brick_coords.append(coords)
         
     return brick_coords
         
     
 def level2() -> list:
     brick_coords = []
-    current_y = 30
+    current_y = 1
     current_x = round((SCREEN_X)/2)
     reflection_offset = 10
     for i in range(6):
@@ -76,8 +80,6 @@ def level2() -> list:
                 [
                     current_x + j * BRICK_DEFAULT_WIDTH,
                     current_y,
-                    current_x + (j + 1) * BRICK_DEFAULT_WIDTH,
-                    current_y + BRICK_DEFAULT_HEIGHT,
                     health
                 ]
             )
@@ -87,8 +89,6 @@ def level2() -> list:
                     [
                         current_x + j * BRICK_DEFAULT_WIDTH,
                         current_y + (reflection_offset - i) * BRICK_DEFAULT_HEIGHT,
-                        current_x + (j + 1) * BRICK_DEFAULT_WIDTH,
-                        current_y + (reflection_offset + 1 - i) * BRICK_DEFAULT_HEIGHT,
                         health_reflect
                     ]
                 )
@@ -96,4 +96,13 @@ def level2() -> list:
         current_x -= 0.5 * BRICK_DEFAULT_WIDTH
         current_y += BRICK_DEFAULT_HEIGHT
 
+    return brick_coords
+
+
+def level3() -> list:
+    brick_coords = []
+    for i in range(1):
+        brick_coords.append(
+            (5, 5, 1)
+        )
     return brick_coords

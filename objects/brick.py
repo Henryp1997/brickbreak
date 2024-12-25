@@ -2,7 +2,7 @@
 
 import random
 import pygame as pg
-from consts import ASSETS_PATH, ALL_POWERUP_TYPES, NUM_POWERUPS
+from consts import ASSETS_PATH, ALL_POWERUP_TYPES, NUM_POWERUPS, BRICK_DEFAULT_WIDTH, BRICK_DEFAULT_HEIGHT
 from objects.powerup import Powerup
 
 class Brick():
@@ -10,6 +10,8 @@ class Brick():
         "artist",
         "x",
         "y",
+        "gridx",
+        "gridy",
         "width",
         "height",
         "health",
@@ -21,9 +23,10 @@ class Brick():
         "image_h2_rect",
         "image_h1_rect"
     ]
-    def __init__(self, artist, x, y, width, height, health) -> None:
+    def __init__(self, artist, gridx, gridy, width, height, health) -> None:
         self.artist = artist
-        self.x, self.y = x, y
+        self.gridx, self.gridy = gridx, gridy
+        self.x, self.y = self.convert_grid_to_coords()
         self.width, self.height = width, height
         self.health, self.is_alive = health, True
         self.image_h3 = pg.image.load(f"{ASSETS_PATH}/brick_h3.png").convert_alpha()
@@ -32,6 +35,11 @@ class Brick():
         self.image_h3_rect = self.image_h3.get_rect(topleft=(self.x, self.y))
         self.image_h2_rect = self.image_h2.get_rect(topleft=(self.x, self.y))
         self.image_h1_rect = self.image_h1.get_rect(topleft=(self.x, self.y))
+
+
+    def convert_grid_to_coords(self) -> tuple:
+        # Add 5 to account for wall and ceiling thickness
+        return (self.gridx * BRICK_DEFAULT_WIDTH + 5, self.gridy * BRICK_DEFAULT_HEIGHT + 5)
 
 
     def draw_brick_sprite(self) -> None:
