@@ -90,7 +90,9 @@ class Ball():
                     # Turn the padlocked brick into a normal 2-health brick if there is one
                     locked_brick.health -= 1
 
-            brick_obj.generate_powerup(all_powerups)
+            if not brick_obj.is_alive:
+                # Only generate powerup if brick was destroyed
+                brick_obj.generate_powerup(all_powerups)
 
 
     def brick_collide_vertical(

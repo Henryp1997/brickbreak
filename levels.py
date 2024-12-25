@@ -58,11 +58,35 @@ def level1() -> list:
         
     return brick_coords
         
-    
+
 def level2() -> list:
     brick_coords = []
+    y_offset1 = 7
+    coords = [
+        (2, 1, 1), (1, 2, 1), (2, 2, 2), (2, 3, 1), (3, 2, 1),
+        (6, 1, 1), (5, 2, 1), (6, 2, 2), (6, 3, 1), (7, 2, 1),
+        (10, 1, 1), (9, 2, 1), (10, 2, 2), (10, 3, 1), (11, 2, 1)
+    ]
+    for c in coords:
+        brick_coords.append(c)
+        brick_coords.append(
+            (c[0], c[1] + y_offset1, c[2])
+        )
+
+    for i in range(13):
+        brick_coords.append((i, 6, 2))
+
+    for i in range(13):
+        if i % 2 == 1:
+            brick_coords.append((i, 13, 1))
+
+    return brick_coords
+
+    
+def level3() -> list:
+    brick_coords = []
     current_y = 1
-    current_x = round((SCREEN_X)/2)
+    current_x = 6.5
     reflection_offset = 10
     for i in range(6):
         for j in range(i):
@@ -78,7 +102,7 @@ def level2() -> list:
                 health, health_reflect = 2, 2
             brick_coords.append(
                 [
-                    current_x + j * BRICK_DEFAULT_WIDTH,
+                    current_x + j,
                     current_y,
                     health
                 ]
@@ -87,22 +111,13 @@ def level2() -> list:
             if i != 5:
                 brick_coords.append(
                     [
-                        current_x + j * BRICK_DEFAULT_WIDTH,
-                        current_y + (reflection_offset - i) * BRICK_DEFAULT_HEIGHT,
+                        current_x + j,
+                        current_y + (reflection_offset - i),
                         health_reflect
                     ]
                 )
         reflection_offset -= 1
-        current_x -= 0.5 * BRICK_DEFAULT_WIDTH
-        current_y += BRICK_DEFAULT_HEIGHT
+        current_x -= 0.5
+        current_y += 1
 
-    return brick_coords
-
-
-def level3() -> list:
-    brick_coords = []
-    for i in range(1):
-        brick_coords.append(
-            (5, 5, 1)
-        )
     return brick_coords

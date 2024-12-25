@@ -72,8 +72,10 @@ def check_system_keys(restart, init_everything, all_bricks):
     return restart, init_everything, all_bricks
 
 
-def remain_paused(key) -> None:
+def remain_paused(key, artist) -> None:
     keys = {"ESCAPE": K_ESCAPE, "SPACE": K_SPACE}
+    artist.draw_start_text()
+    pg.display.update()
     while True:
         for event in pg.event.get():
             if event.type == KEYDOWN and event.key == keys[key]:
@@ -103,7 +105,7 @@ def start_game():
 
         if init_everything:
             all_lasers, all_bricks, all_powerups = [], [], []
-            level, levels_cleared = 1, 0
+            level, levels_cleared = 0, 0
             revive_ball, restart, init_everything = False, False, False
             player, ball_obj = initialise_objects(artist, level)
             pg.display.update()
@@ -142,7 +144,6 @@ def start_game():
 
                 artist.start_or_retry = "start"
                 artist.draw_info_bar(player.lives, player.powerups, player.width)
-                artist.draw_start_text()
                 
                 # Draw brick objects that are still active before entering paused loop
                 for brick_obj in all_bricks:
@@ -167,7 +168,7 @@ def start_game():
 
                 # Update screen once before entering pause loop
                 pg.display.update()
-                remain_paused(key=exit_key)
+                remain_paused(key=exit_key, artist=artist)
 
             elif not lost_life and not completed_level:
                 player.draw_paddle()

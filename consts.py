@@ -54,14 +54,14 @@ ALL_PLAYER_WIDTHS = [
 ]
 
 PLAYER_INIT_X = (SCREEN_X - PLAYER_DEFAULT_WIDTH) / 2
-PLAYER_INIT_Y = SCREEN_Y * (15 / 18)
+PLAYER_INIT_Y = SCREEN_Y * 0.8
 
 BALL_INIT_POS = {
    -1:  (SCREEN_X*0.7, SCREEN_Y/3),
     0:  (SCREEN_X*0.7, SCREEN_Y/3),
     1:  (SCREEN_X*0.65, SCREEN_Y/2.5),
     2:  (SCREEN_X*0.9, SCREEN_Y/3),
-    3:  (SCREEN_X*0.9, SCREEN_Y/3),
+    3:  (SCREEN_X*0.7, SCREEN_Y/2),
 }
 
 BALL_DEFAULT_VELOCITY = (-7, 7)
@@ -81,12 +81,12 @@ BRICK_DEFAULT_HEIGHT   = 30
 INFO_BAR_START = PLAYER_INIT_Y + 40
 ALL_POWERUP_TYPES = {
     "Multi":            ("multi",             175,  "multi_powerup"),
-    "Fast ball":        ("ball_speed",        220,  "fast_ball_powerup"),
-    "Unstoppable ball": ("ball_pass_through", 288,  "unstop_powerup"),
-    "Laser":            ("laser",             400,  "laser_powerup"),
-    "Fast paddle":      ("paddle_speed",      450,  "fast_pad_powerup"),
-    "Large paddle":     ("paddle_size_up",    540,  "large_powerup"),
-    "Small paddle":     ("paddle_size_down",  635,  "small_powerup"),
+    "Fast ball":        ("ball_speed",        240,  "fast_ball_powerup"),
+    "Unstoppable ball": ("ball_pass_through", 335,  "unstop_powerup"),
+    "Laser":            ("laser",             480,  "laser_powerup"),
+    "Fast paddle":      ("paddle_speed",      535,  "fast_pad_powerup"),
+    "Large paddle":     ("paddle_size_up",    640,  "large_powerup"),
+    "Small paddle":     ("paddle_size_down",  755,  "small_powerup"),
     "Extra Life":       ("extra_life",        None, "life_powerup")
 }
 NUM_POWERUPS = len(ALL_POWERUP_TYPES)

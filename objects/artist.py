@@ -28,8 +28,20 @@ class Artist():
 
 
     def draw_start_text(self) -> None:
-        text_pos = (self.SCREEN_X/2 - round(self.SCREEN_X*0.13), self.SCREEN_Y/2 - (self.SCREEN_Y/9))
-        font = pg.font.SysFont("Arial", 30)
+        rect_width = 600
+        rect_height = 200
+        rect_coords = (self.SCREEN_X/2 - rect_width/2, self.SCREEN_Y/4)
+        text_pos = (rect_coords[0] + rect_width/11, rect_coords[1] + rect_height/2.5)
+        font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 25)
+
+        pg.draw.rect(
+            self.screen,
+            "#AAAAAA",
+            pg.Rect(
+                (rect_coords[0], rect_coords[1], rect_width, rect_height)
+            ),
+            border_radius=4
+        )
         self.screen.blit(
             font.render(f"Press Space to {self.start_or_retry}", True, COLOURS["RED"]), text_pos
         )
@@ -51,20 +63,20 @@ class Artist():
 
     def draw_info_bar(self, lives, player_powerups, player_width) -> None:
         pg.draw.rect(self.screen, COLOURS["GREY2"], pg.Rect((0, INFO_BAR_START), (self.SCREEN_X,self.SCREEN_Y - INFO_BAR_START)), width=5)
-        font = pg.font.SysFont("Arial", 30)
+        font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 15)
         self.screen.blit(
             font.render(f"Lives:", True, COLOURS["RED"]), (round(self.SCREEN_X*0.02), INFO_BAR_START + round(self.SCREEN_X*0.02))
         )
-        font = pg.font.SysFont("Arial", 25)
+        font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 20)
         self.screen.blit(
             font.render(f"{lives}", True, COLOURS["GREY1"]), (round(self.SCREEN_X*(45/1000)), INFO_BAR_START + round(self.SCREEN_X*(58/1000)))
         )
-        font = pg.font.SysFont("Arial", 30)
+        font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 15)
         self.screen.blit(
             font.render(f"Active modifiers:", True, COLOURS["RED"]), (175, INFO_BAR_START + 20)
         )
 
-        font = pg.font.SysFont("Arial", 15)
+        font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 8)
         for i, j in enumerate(list(ALL_POWERUP_TYPES.keys())):
             power_name = ALL_POWERUP_TYPES[j][0]
             if power_name != "extra_life":
@@ -81,7 +93,7 @@ class Artist():
                         col = COLOURS["RED"]
                     else:
                         col = COLOURS["GREY1"]
-                self.screen.blit(font.render(j, True, col),(ALL_POWERUP_TYPES[j][1], INFO_BAR_START + self.SCREEN_X*(65/850)))
+                self.screen.blit(font.render(j, True, col), (ALL_POWERUP_TYPES[j][1], INFO_BAR_START + self.SCREEN_X*0.07))
 
 
     def draw_dummy_ball(self, level) -> None:
