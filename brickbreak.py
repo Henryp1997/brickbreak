@@ -72,10 +72,11 @@ def check_system_keys(restart, init_everything, all_bricks):
     return restart, init_everything, all_bricks
 
 
-def remain_paused(key, artist) -> None:
+def remain_paused(key, artist, draw_screen=None) -> None:
     keys = {"ESCAPE": K_ESCAPE, "SPACE": K_SPACE}
-    artist.draw_start_text()
-    pg.display.update()
+    if draw_screen:
+        artist.draw_start_text()
+        pg.display.update()
     while True:
         for event in pg.event.get():
             if event.type == KEYDOWN and event.key == keys[key]:
@@ -108,6 +109,8 @@ def start_game():
             level, levels_cleared = 0, 0
             revive_ball, restart, init_everything = False, False, False
             player, ball_obj = initialise_objects(artist, level)
+            artist.start_or_retry = "start"
+            draw_screen = True
             pg.display.update()
        
         elif not init_everything:
@@ -129,6 +132,7 @@ def start_game():
                 
                 # Play sound and subtract from lives count
                 if lost_life:
+                    artist.start_or_retry = "retry"
                     player.lives -= 1
                     if player.lives > 0:
                         play_sound("lose_life")
@@ -142,7 +146,6 @@ def start_game():
                 player.reset_attributes()
                 player.draw_paddle()
 
-                artist.start_or_retry = "start"
                 artist.draw_info_bar(player.lives, player.powerups, player.width)
                 
                 # Draw brick objects that are still active before entering paused loop
@@ -165,10 +168,11 @@ def start_game():
                     artist.draw_game_over_screen()
                     restart, init_everything = True, True # Simulate a full restart
                     exit_key = "ESCAPE"
+                    draw_screen = False
 
                 # Update screen once before entering pause loop
                 pg.display.update()
-                remain_paused(key=exit_key, artist=artist)
+                remain_paused(key=exit_key, artist=artist, draw_screen=draw_screen)
 
             elif not lost_life and not completed_level:
                 player.draw_paddle()

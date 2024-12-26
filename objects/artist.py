@@ -2,6 +2,7 @@ import pygame as pg
 from consts import (
     ASSETS_PATH,
     SCREEN_X,
+    SCREEN_Y,
     COLOURS,
     INFO_BAR_START,
     ALL_POWERUP_TYPES,
@@ -23,8 +24,12 @@ class Artist():
         self.screen.fill(colour)
 
 
-    def draw_border(self, colour) -> None:
-        pg.draw.rect(self.screen, colour, pg.Rect((0, 0), (SCREEN_X, INFO_BAR_START + round(SCREEN_X*0.002))), width=5)
+    def draw_border(self, colour, full=False) -> None:
+        if full:
+            rect = pg.Rect((0, 0), (SCREEN_X, SCREEN_Y))
+        else:
+            rect = pg.Rect((0, 0), (SCREEN_X, INFO_BAR_START + round(SCREEN_X*0.002)))
+        pg.draw.rect(self.screen, colour, rect, width=5)
 
 
     def draw_start_text(self) -> None:
@@ -36,44 +41,44 @@ class Artist():
 
         pg.draw.rect(
             self.screen,
-            "#AAAAAA",
+            "#444444",
             pg.Rect(
                 (rect_coords[0], rect_coords[1], rect_width, rect_height)
             ),
             border_radius=4
         )
         self.screen.blit(
-            font.render(f"Press Space to {self.start_or_retry}", True, COLOURS["RED"]), text_pos
+            font.render(f"Press Space to {self.start_or_retry}", True, COLOURS["ELEC_BLUE"]), text_pos
         )
 
 
     def draw_game_over_screen(self) -> None:
         self.fill_screen(colour=COLOURS["BLACK"])
-        self.draw_border(colour=COLOURS["GREY2"])
+        self.draw_border(colour=COLOURS["GREY2"], full=True)
         text1_pos = (self.SCREEN_X/2 - round(self.SCREEN_X/10), self.SCREEN_Y/2 - (self.SCREEN_Y/9))
         text2_pos = (text1_pos[0] - round(self.SCREEN_X*0.03), text1_pos[1] + round(self.SCREEN_Y*(5/90)))
         font = pg.font.SysFont("Arial", 30)
         self.screen.blit(
-            font.render("GAME OVER", True, COLOURS["RED"]), text1_pos
+            font.render("GAME OVER", True, COLOURS["ELEC_BLUE"]), text1_pos
         )
         self.screen.blit(
-            font.render("Press Esc to restart", True, COLOURS["RED"]), text2_pos
+            font.render("Press Esc to restart", True, COLOURS["ELEC_BLUE"]), text2_pos
         )
 
 
     def draw_info_bar(self, lives, player_powerups, player_width) -> None:
-        pg.draw.rect(self.screen, COLOURS["GREY2"], pg.Rect((0, INFO_BAR_START), (self.SCREEN_X,self.SCREEN_Y - INFO_BAR_START)), width=5)
-        font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 15)
+        pg.draw.rect(self.screen, COLOURS["GREY2"], pg.Rect((0, INFO_BAR_START), (self.SCREEN_X, self.SCREEN_Y - INFO_BAR_START)), width=5)
+        font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 20)
         self.screen.blit(
-            font.render(f"Lives:", True, COLOURS["RED"]), (round(self.SCREEN_X*0.02), INFO_BAR_START + round(self.SCREEN_X*0.02))
+            font.render(f"Lives", True, COLOURS["ELEC_BLUE"]), (SCREEN_X*0.02, SCREEN_Y*0.88)
         )
         font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 20)
         self.screen.blit(
-            font.render(f"{lives}", True, COLOURS["GREY1"]), (round(self.SCREEN_X*(45/1000)), INFO_BAR_START + round(self.SCREEN_X*(58/1000)))
+            font.render(f"{lives}", True, COLOURS["GREY1"]), (SCREEN_X*0.06, SCREEN_Y*0.93)
         )
-        font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 15)
+        font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 20)
         self.screen.blit(
-            font.render(f"Active modifiers:", True, COLOURS["RED"]), (175, INFO_BAR_START + 20)
+            font.render(f"Active modifiers", True, COLOURS["ELEC_BLUE"]), (SCREEN_X*0.17, SCREEN_Y*0.88)
         )
 
         font = pg.font.Font(f"{ASSETS_PATH}/fonts/arcade.ttf", 8)
@@ -85,15 +90,15 @@ class Artist():
                     if player_width == PLAYER_DEFAULT_WIDTH:
                         col = COLOURS["GREY1"]
                     elif "up" in power_name and player_width == PLAYER_LONG:
-                        col = COLOURS["RED"]
+                        col = COLOURS["FIRE"]
                     elif "down" in power_name and player_width == PLAYER_SHORT:
-                        col = COLOURS["RED"]
+                        col = COLOURS["FIRE"]
                 else:
+                    col = COLOURS["GREY1"]
                     if power_name in player_powerups:
-                        col = COLOURS["RED"]
-                    else:
-                        col = COLOURS["GREY1"]
-                self.screen.blit(font.render(j, True, col), (ALL_POWERUP_TYPES[j][1], INFO_BAR_START + self.SCREEN_X*0.07))
+                        col = COLOURS["FIRE"]
+
+                self.screen.blit(font.render(j, True, col), (ALL_POWERUP_TYPES[j][1], SCREEN_Y*0.935))
 
 
     def draw_dummy_ball(self, level) -> None:

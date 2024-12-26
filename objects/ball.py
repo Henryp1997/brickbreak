@@ -93,25 +93,65 @@ class Ball():
             if not brick_obj.is_alive:
                 # Only generate powerup if brick was destroyed
                 brick_obj.generate_powerup(all_powerups)
+    
 
-
-    def brick_collide_vertical(
+    def __brick_collide_bottom(
         self,
         brick_obj,
-        y_lim,
-        x_lim1,
-        x_lim2, 
-        negate_speed,
-        height_adjustment=0
+        negate_speed
     ) -> bool:
-        if abs(self.y + height_adjustment - y_lim) < 10:
-            if x_lim1 <= (self.x + self.height) and self.x <= x_lim2:
+        if 0 < (self.y - brick_obj.y - BRICK_DEFAULT_HEIGHT) < 10:
+            if (self.x + self.height) >= brick_obj.x and self.x <= brick_obj.x + BRICK_DEFAULT_WIDTH:
                 if negate_speed == 1 and brick_obj.health > 1:
                     negate_speed *= -1
                 self.velocity = (self.velocity[0], negate_speed * self.velocity[1])
                 return True
         return False
+
+
+    def __brick_collide_top(
+        self,
+        brick_obj,
+        negate_speed
+    ) -> bool:
+        if 0 < (brick_obj.y - self.y - self.height) < 10:
+            if (self.x + self.height) >= brick_obj.x and self.x <= brick_obj.x + BRICK_DEFAULT_WIDTH:
+                if negate_speed == 1 and brick_obj.health > 1:
+                    negate_speed *= -1
+                self.velocity = (self.velocity[0], negate_speed * self.velocity[1])
+                return True
+        return False
+
+
+    def __brick_collide_left(
+        self,
+        brick_obj,
+        negate_speed
+    ) -> bool:
+        if 0 < (brick_obj.x - self.x - self.height) < 10:
+            # Check y positioning. Downwards is negative y
+            if (self.y + self.height) >= brick_obj.y and self.y <= brick_obj.y + BRICK_DEFAULT_HEIGHT:
+                if negate_speed == 1 and brick_obj.health > 1:
+                    negate_speed *= -1
+                self.velocity = (negate_speed * self.velocity[0], self.velocity[1])
+                return True
+        return False
     
+
+    def __brick_collide_right(
+        self,
+        brick_obj,
+        negate_speed
+    ) -> bool:
+        if 0 < (self.x - brick_obj.x - BRICK_DEFAULT_WIDTH) < 10:
+            # Check y positioning. Downwards is negative y
+            if (self.y + self.height) >= brick_obj.y and self.y <= brick_obj.y + BRICK_DEFAULT_HEIGHT:
+                if negate_speed == 1 and brick_obj.health > 1:
+                    negate_speed *= -1
+                self.velocity = (negate_speed * self.velocity[0], self.velocity[1])
+                return True
+        return False
+
 
     def brick_collide_horizontal(
         self,
@@ -124,7 +164,7 @@ class Ball():
     ) -> bool:
         if abs(self.x + width_adjustment - x_lim) < 10:
             # Check y positioning. Downwards is negative y
-            if y_lim1 >= (self.y + self.height) and self.y >= y_lim2:
+            if (self.y + self.height) >= y_lim1 and self.y <= y_lim2:
                 if negate_speed == 1 and brick_obj.health > 1:
                     negate_speed *= -1
                 self.velocity = (negate_speed * self.velocity[0], self.velocity[1])
@@ -187,7 +227,7 @@ class Ball():
         ball_v_mag = self.v_mag()
 
         # Collision with brick. Only check if close enough to the lowest brick
-        if self.y < max_brick_y + 10:
+        if self.y < max_brick_y + 30:
             # Only check the bricks within a certain distance of the ball
             bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < 1.25*BRICK_DEFAULT_WIDTH]
             all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in bricks_to_check]
@@ -217,26 +257,28 @@ class Ball():
                 brick_hit = False
                 # Hit brick from bottom. Only check if moving upwards
                 if not neighbours_alive[0] and self.velocity[1] < 0:
-                    brick_hit = self.brick_collide_vertical(brick_obj, b, l, r, negate_speed)
+                    brick_hit = self.__brick_collide_bottom(brick_obj, negate_speed)
 
                 # Hit brick from above. Only check if moving downwards
                 if not neighbours_alive[1] and not brick_hit and self.velocity[1] > 0:
-                    brick_hit = self.brick_collide_vertical(brick_obj, t, l, r, negate_speed, height_adjustment=self.height)
+                    brick_hit = self.__brick_collide_top(brick_obj, negate_speed)
 
                 # Hit brick from left side. Only check if moving right
                 if not neighbours_alive[2] and not brick_hit and self.velocity[0] > 0:
-                    brick_hit = self.brick_collide_horizontal(brick_obj, l, b, t, negate_speed, width_adjustment=self.height)
+                    brick_hit = self.__brick_collide_left(brick_obj, negate_speed)
 
                 if not neighbours_alive[3] and not brick_hit and self.velocity[0] < 0:
                     # Hit brick from right side
-                    brick_hit = self.brick_collide_horizontal(brick_obj, r, b, t, negate_speed)
+                    brick_hit = self.__brick_collide_right(brick_obj, negate_speed)
                 
                 if brick_hit:
                     self.update_bricks(all_bricks, all_powerups, brick_obj, brick_hit)
                     return None, all_bricks
 
         # Collision with paddle
-        if (self.y + self.height) > (player.y - 5):
+        near_paddle = (self.y + self.height) > (player.y - 10)
+        past_paddle = (self.y + self.height) > player.y + 5
+        if near_paddle and not past_paddle:
             if self.velocity[1] > 0:
                 # Only check for paddle collisions if moving downards (prevents weird multi collisions)    
                 self.paddle_collide(ball_v_mag, player)
