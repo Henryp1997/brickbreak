@@ -222,7 +222,7 @@ def start_game():
             for ball_obj in all_balls:
                 ball_obj.draw_ball(artist)
                 ball_obj.move()
-                dead, all_bricks = ball_obj.check_collision(player, all_bricks, all_powerups, max_brick_y)
+                dead, all_bricks = ball_obj.check_collision(player, all_bricks, all_powerups, max_brick_y, artist)
                 if dead == "dead":
                     all_balls.pop(all_balls.index(ball_obj))
 
