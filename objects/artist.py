@@ -41,7 +41,7 @@ class Artist():
 
         pg.draw.rect(
             self.screen,
-            "#444444",
+            "#666666",
             pg.Rect(
                 (rect_coords[0], rect_coords[1], rect_width, rect_height)
             ),

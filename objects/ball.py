@@ -96,6 +96,64 @@ class Ball():
                 brick_obj.generate_powerup(all_powerups)
 
 
+    def __brick_collide(
+            self,
+            player,
+            brick_obj,
+            neighbours_alive,
+            interpolated_x1,
+            interpolated_y1,
+            l,
+            r,
+            b,
+            t
+        ) -> bool:
+        brick_hit = False
+        if "ball_pass_through" in player.powerups and brick_obj.health == 1:
+            # Easier logic for unstoppable ball. Just check if the ball is inside the brick
+            brick_hit = True
+        else:
+            if "ball_pass_through" in player.powerups:
+                # Don't care about neighbour bricks being still active if player has unstoppable ball
+                neighbours_alive = (False,)*4
+
+            ball_center = (interpolated_x1 + 0.5*self.height, interpolated_y1 + 0.5*self.height)
+            
+            bc, wc = ball_center, brick_obj.center
+            m = BRICK_DEFAULT_HEIGHT / BRICK_DEFAULT_WIDTH # Gradient of diagonal lines connecting brick's corners
+            grad = abs((bc[1] - wc[1]) / (bc[0] - wc[0]))  # Use the gradient of the line connecting the ball and brick centers to determine which face was hit
+            if bc[0] > wc[0]:
+                # Ball to the right of brick center
+                if bc[1] > wc[1]:
+                    # Ball below brick center
+                    if grad <= m:
+                        brick_hit = self.__brick_hit_right(r, neighbours_alive)
+                    elif grad > m:
+                        brick_hit = self.__brick_hit_bottom(b, neighbours_alive)
+                elif bc[1] < wc[1]:
+                    # Ball above brick center
+                    if grad <= m:
+                        brick_hit = self.__brick_hit_right(r, neighbours_alive)
+                    elif grad > m:
+                        brick_hit = self.__brick_hit_top(t, neighbours_alive)
+            
+            elif bc[0] < wc[0]:
+                # Ball to the left of brick center
+                if bc[1] > wc[1]:
+                    # Ball below brick center
+                    if grad <= m:
+                        brick_hit = self.__brick_hit_left(l, neighbours_alive)
+                    elif grad > m:
+                        brick_hit = self.__brick_hit_bottom(b, neighbours_alive)
+                elif bc[1] < wc[1]:
+                    # Ball above center
+                    if grad <= m:
+                        brick_hit = self.__brick_hit_left(l, neighbours_alive)
+                    elif grad > m:
+                        brick_hit = self.__brick_hit_top(t, neighbours_alive)
+        return brick_hit
+
+
     def __brick_hit_bottom(
         self,
         b,
@@ -237,59 +295,18 @@ class Ball():
                 brick_hit = False
 
                 # Calculate coordinates of ball on next frame
-                interpolated_x1 = self.x + self.velocity[0]
-                interpolated_y1 = self.y + self.velocity[1]
-                interpolated_x2 = self.x + self.height + self.velocity[0]
-                interpolated_y2 = self.y + self.height + self.velocity[1]
+                interpolation_factor = 0.25
+                interpolated_x1 = self.x + (interpolation_factor*self.velocity[0])
+                interpolated_y1 = self.y + (interpolation_factor*self.velocity[0])
+                interpolated_x2 = self.x + self.height + (interpolation_factor*self.velocity[0])
+                interpolated_y2 = self.y + self.height + (interpolation_factor*self.velocity[0])
 
                 ball_in_brick_next_frame = ((l <= interpolated_x1 < r) and (t <= interpolated_y1 < b)) or ((l <= interpolated_x2 < r) and (t <= interpolated_y2 < b))
                 if ball_in_brick_next_frame:
-                    if "ball_pass_through" in player.powerups and brick_obj.health == 1:
-                        # Easier logic for unstoppable ball. Just check if the ball is inside the brick
-                        brick_hit = True
-                    else:
-                        if "ball_pass_through" in player.powerups:
-                            # Don't care about neighbour bricks being still active if player has unstoppable ball
-                            neighbours_alive = (False,)*4
-
-                        ball_center = (interpolated_x1 + 0.5*self.height, interpolated_y1 + 0.5*self.height)
-                        
-                        bc, wc = ball_center, brick_obj.center
-                        m = BRICK_DEFAULT_HEIGHT / BRICK_DEFAULT_WIDTH # Gradient of diagonal lines connecting brick's corners
-                        grad = abs((bc[1] - wc[1]) / (bc[0] - wc[0]))  # Use the gradient of the line connecting the ball and brick centers to determine which face was hit
-                        if bc[0] > wc[0]:
-                            # Ball to the right of brick center
-                            if bc[1] > wc[1]:
-                                # Ball below brick center
-                                if grad <= m:
-                                    brick_hit = self.__brick_hit_right(r, neighbours_alive)
-                                elif grad > m:
-                                    brick_hit = self.__brick_hit_bottom(b, neighbours_alive)
-                            elif bc[1] < wc[1]:
-                                # Ball above brick center
-                                if grad <= m:
-                                    brick_hit = self.__brick_hit_right(r, neighbours_alive)
-                                elif grad > m:
-                                    brick_hit = self.__brick_hit_top(t, neighbours_alive)
-                        
-                        elif bc[0] < wc[0]:
-                            # Ball to the left of brick center
-                            if bc[1] > wc[1]:
-                                # Ball below brick center
-                                if grad <= m:
-                                    brick_hit = self.__brick_hit_left(l, neighbours_alive)
-                                elif grad > m:
-                                    brick_hit = self.__brick_hit_bottom(b, neighbours_alive)
-                            elif bc[1] < wc[1]:
-                                # Ball above center
-                                if grad <= m:
-                                    brick_hit = self.__brick_hit_left(l, neighbours_alive)
-                                elif grad > m:
-                                    brick_hit = self.__brick_hit_top(t, neighbours_alive)
-
-                if brick_hit:
-                    self.update_bricks(all_bricks, all_powerups, brick_obj, brick_hit)
-                    return None, all_bricks
+                    brick_hit = self.__brick_collide(player, brick_obj, neighbours_alive, interpolated_x1, interpolated_y1, l, r, b, t)
+                    if brick_hit:
+                        self.update_bricks(all_bricks, all_powerups, brick_obj, brick_hit)
+                        return None, all_bricks
 
         # Collision with paddle
         near_paddle = (self.y + self.height) > (player.y - 10)
