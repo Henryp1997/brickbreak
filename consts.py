@@ -20,6 +20,7 @@ COLOURS = {
     "WHITE":     "#FFFFFF",
     "GREY1":     "#D1D1D1",
     "GREY2":     "#A1A1A1",
+    "GREY3":     "#666666",
     "PINK":      "#FC03F8",
     "PURPLE":    "#7734EB",
     "ORANGE":    "#F5A742",
@@ -59,7 +60,7 @@ PLAYER_INIT_Y = SCREEN_Y * 0.8
 BALL_INIT_POS = {
    -1:  (SCREEN_X*0.7, SCREEN_Y/3),
     0:  (SCREEN_X*0.7, SCREEN_Y/3),
-    # 0: (161.53069787925, 200.28353529578135), # Bug testing
+    # 0: (221.193245504215, 354.23592302967074), # Bug testing
     1:  (SCREEN_X*0.65, SCREEN_Y/2.5),
     2:  (SCREEN_X*0.6, SCREEN_Y/1.5),
     3:  (SCREEN_X*0.7, SCREEN_Y/2),

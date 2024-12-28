@@ -25,6 +25,7 @@ class Ball():
 
     def move(self) -> None:
         self.x += self.velocity[0]; self.y += self.velocity[1]
+        # print(self.x, self.y, self.velocity)
 
 
     def v_mag(self) -> float:
@@ -101,8 +102,8 @@ class Ball():
             player,
             brick_obj,
             neighbours_alive,
-            interpolated_x1,
-            interpolated_y1,
+            x1_interp,
+            x2_interp,
             l,
             r,
             b,
@@ -117,7 +118,7 @@ class Ball():
                 # Don't care about neighbour bricks being still active if player has unstoppable ball
                 neighbours_alive = (False,)*4
 
-            ball_center = (interpolated_x1 + 0.5*self.height, interpolated_y1 + 0.5*self.height)
+            ball_center = (x1_interp + 0.5*self.height, x2_interp + 0.5*self.height)
             
             bc, wc = ball_center, brick_obj.center
             m = BRICK_DEFAULT_HEIGHT / BRICK_DEFAULT_WIDTH # Gradient of diagonal lines connecting brick's corners
@@ -191,7 +192,7 @@ class Ball():
     ) -> bool:
         if not neighbours_alive[3]:
             if self.velocity[0] < 0: # Can only hit right if moving left
-                # Hit right. Snap ball to right of brick. See self.ceiling_collide for same logic
+                # Hit right. Snap ball to right of brick. See self.wall_collide for same logic
                 self.y += (self.velocity[1] / self.velocity[0]) * (r - self.x)
                 self.x = r
                 self.velocity = (-1 * self.velocity[0], self.velocity[1])
@@ -206,7 +207,7 @@ class Ball():
     ) -> bool:
         if not neighbours_alive[2]:
             if self.velocity[0] > 0: # Can only hit the left if moving to the right/
-                # Hit left. Snap ball to left of brick. See self.ceiling_collide for same logic
+                # Hit left. Snap ball to left of brick. See self.wall_collide for same logic
                 self.y += (self.velocity[1] / self.velocity[0]) * (l - self.x - self.height)
                 self.x = l - self.height
                 self.velocity = (-1 * self.velocity[0], self.velocity[1])
@@ -272,7 +273,7 @@ class Ball():
         # Collision with brick. Only check if close enough to the lowest brick
         if self.y < max_brick_y + 30:
             # Only check the bricks within a certain distance of the ball
-            bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < 1.25*BRICK_DEFAULT_WIDTH]
+            bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < BRICK_DEFAULT_WIDTH]
             all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in all_bricks]
                 
             for brick_obj in bricks_to_check:
@@ -296,14 +297,20 @@ class Ball():
 
                 # Calculate coordinates of ball on next frame
                 interpolation_factor = 0.25
-                interpolated_x1 = self.x + (interpolation_factor*self.velocity[0])
-                interpolated_y1 = self.y + (interpolation_factor*self.velocity[0])
-                interpolated_x2 = self.x + self.height + (interpolation_factor*self.velocity[0])
-                interpolated_y2 = self.y + self.height + (interpolation_factor*self.velocity[0])
+                x1_interp = self.x + (interpolation_factor*self.velocity[0])
+                y1_interp = self.y + (interpolation_factor*self.velocity[0])
+                x2_interp = self.x + self.height + (interpolation_factor*self.velocity[0])
+                y2_interp = self.y + self.height + (interpolation_factor*self.velocity[0])
 
-                ball_in_brick_next_frame = ((l <= interpolated_x1 < r) and (t <= interpolated_y1 < b)) or ((l <= interpolated_x2 < r) and (t <= interpolated_y2 < b))
+                # X and Y coordinates are within the current brick on the next frame
+                x_in_brick = (l <= x1_interp <= r) or (l <= x2_interp <= r)
+                y_in_brick = (t <= y1_interp <= b) or (t <= y2_interp <= b)
+
+                # Determine that the ball has collided if it is going to be in the brick on next frame
+                ball_in_brick_next_frame = x_in_brick and y_in_brick
                 if ball_in_brick_next_frame:
-                    brick_hit = self.__brick_collide(player, brick_obj, neighbours_alive, interpolated_x1, interpolated_y1, l, r, b, t)
+                    # x1_interp and y1_interp only needed to calculate ball's center
+                    brick_hit = self.__brick_collide(player, brick_obj, neighbours_alive, x1_interp, y1_interp, l, r, b, t)
                     if brick_hit:
                         self.update_bricks(all_bricks, all_powerups, brick_obj, brick_hit)
                         return None, all_bricks
