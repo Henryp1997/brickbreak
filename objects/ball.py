@@ -101,8 +101,6 @@ class Ball():
             player,
             brick_obj,
             neighbours_alive,
-            x1_interp,
-            x2_interp,
             l,
             r,
             b,
@@ -117,7 +115,7 @@ class Ball():
                 # Don't care about neighbour bricks being still active if player has unstoppable ball
                 neighbours_alive = (False,)*4
 
-            ball_center = (x1_interp + 0.5*self.height, x2_interp + 0.5*self.height)
+            ball_center = (self.x + 0.5*self.height, self.y + 0.5*self.height)
             
             bc, wc = ball_center, brick_obj.center
             m = BRICK_DEFAULT_HEIGHT / BRICK_DEFAULT_WIDTH # Gradient of diagonal lines connecting brick's corners
@@ -323,11 +321,10 @@ class Ball():
             all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in all_bricks]
             
             # Calculate coordinates of ball on next frame
-            interpolation_factor = 0.25
-            x1_interp = self.x + (interpolation_factor*self.velocity[0])
-            y1_interp = self.y + (interpolation_factor*self.velocity[1])
-            x2_interp = self.x + self.height + (interpolation_factor*self.velocity[0])
-            y2_interp = self.y + self.height + (interpolation_factor*self.velocity[1])
+            x1_interp = self.x + self.velocity[0]               # Left x-coord on next frame
+            y1_interp = self.y + self.velocity[1]               # Top y-coord on next frame
+            x2_interp = self.x + self.height + self.velocity[0] # Right x-coord on next frame
+            y2_interp = self.y + self.height + self.velocity[1] # Bottom y-coord on next frame
 
             for brick_obj in bricks_to_check:
                 # Left, right, top and bottom coords of the brick
@@ -336,14 +333,6 @@ class Ball():
                     brick_obj.x + BRICK_DEFAULT_WIDTH, 
                     brick_obj.y, 
                     brick_obj.y + BRICK_DEFAULT_HEIGHT
-                )
-
-                # Check whether there is a brick blocking the current one
-                neighbours_alive = (
-                    True if (l, b) in all_bricks_coords else False,                        # Neighbour below
-                    True if (l, t - BRICK_DEFAULT_HEIGHT) in all_bricks_coords else False, # Neighbour above
-                    True if (l - BRICK_DEFAULT_WIDTH, t) in all_bricks_coords else False,  # Neighbour to the left
-                    True if (r, t) in all_bricks_coords else False                         # Neighbour to the right
                 )
 
                 brick_hit = False
@@ -355,8 +344,15 @@ class Ball():
                 # Determine that the ball has collided if it is going to be in the brick on next frame
                 ball_in_brick_next_frame = x_in_brick and y_in_brick
                 if ball_in_brick_next_frame:
-                    # x1_interp and y1_interp only needed to calculate ball's center
-                    brick_hit = self.__brick_collide(player, brick_obj, neighbours_alive, x1_interp, y1_interp, l, r, b, t)
+                    # To check whether there is a brick blocking the current one
+                    neighbours_alive = (
+                        True if (l, b) in all_bricks_coords else False,                        # Neighbour below
+                        True if (l, t - BRICK_DEFAULT_HEIGHT) in all_bricks_coords else False, # Neighbour above
+                        True if (l - BRICK_DEFAULT_WIDTH, t) in all_bricks_coords else False,  # Neighbour to the left
+                        True if (r, t) in all_bricks_coords else False                         # Neighbour to the right
+                    )
+
+                    brick_hit = self.__brick_collide(player, brick_obj, neighbours_alive, l, r, b, t)
                     if brick_hit:
                         self.update_bricks(all_bricks, all_powerups, brick_obj, brick_hit)
                         return None, all_bricks
