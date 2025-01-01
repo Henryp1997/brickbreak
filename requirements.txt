@@ -1,2 +1,3 @@
 pygame
 numpy
+cx_freeze
