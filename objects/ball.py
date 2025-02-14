@@ -23,8 +23,9 @@ class Ball():
         self.unstop_image = pg.image.load(f"{ASSETS_PATH}/player_sprites/ball_unstop.png").convert_alpha()
     
 
-    def move(self) -> None:
-        self.x += self.velocity[0]; self.y += self.velocity[1]
+    def move(self, dt) -> None:
+        self.x += self.velocity[0] * dt
+        self.y += self.velocity[1] * dt
 
 
     def v_mag(self) -> float:
@@ -250,12 +251,6 @@ class Ball():
             # Only check the bricks within a certain distance of the ball
             bricks_to_check = [i for i in all_bricks if math.sqrt((self.x - i.x)**2 + (self.y - i.y)**2) < BRICK_DEFAULT_WIDTH]
             all_bricks_coords = [(brick_obj.x, brick_obj.y) for brick_obj in all_bricks]
-            
-            # Calculate coordinates of ball on next frame
-            x1_interp = self.x + self.velocity[0]               # Left x-coord on next frame
-            y1_interp = self.y + self.velocity[1]               # Top y-coord on next frame
-            x2_interp = self.x + self.height + self.velocity[0] # Right x-coord on next frame
-            y2_interp = self.y + self.height + self.velocity[1] # Bottom y-coord on next frame
 
             for brick_obj in bricks_to_check:
                 # Left, right, top and bottom coords of the brick

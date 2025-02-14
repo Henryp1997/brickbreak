@@ -14,6 +14,19 @@ pg.init()
 pg.display.set_caption("Brickbreaker")
 
 
+class Game():
+    def __init__(self) -> None:
+        self.frame_time = 0
+
+
+    def frame_dur(self) -> float:
+        """ Return the duration of a frame in milliseconds """
+        current_time = time.perf_counter()
+        dt = current_time - self.frame_time
+        self.frame_time = current_time
+        return dt
+
+
 def generate_level(artist, level):
     brick_coords, max_brick_y = generate_brick_coords(level)
     all_bricks = [
@@ -72,12 +85,13 @@ def check_system_keys(restart, init_everything, all_bricks):
     return restart, init_everything, all_bricks
 
 
-def remain_paused(key, artist, draw_screen=None) -> None:
+def remain_paused(key, artist, gameobj, draw_screen=None) -> None:
     keys = {"ESCAPE": K_ESCAPE, "SPACE": K_SPACE}
     if draw_screen:
         artist.draw_start_text()
         pg.display.update()
     while True:
+        gameobj.frame_dur() # Make sure we're still measuring frame time
         for event in pg.event.get():
             if event.type == KEYDOWN and event.key == keys[key]:
                 return
@@ -89,6 +103,9 @@ def remain_paused(key, artist, draw_screen=None) -> None:
 def start_game():
     init_everything = True
 
+    # Create game object for keeping track of global properties like game state and time
+    gameobj = Game()
+
     # Create object for drawing things to the screen
     artist = Artist(
         SCREEN_X=SCREEN_X,
@@ -98,6 +115,7 @@ def start_game():
 
     # Main game loop
     while True:
+        gameobj.frame_time = time.perf_counter() # Keep track of frame time for speed calculations
         clock = pg.time.Clock()
         clock.tick(60)
         
@@ -122,6 +140,9 @@ def start_game():
             except UnboundLocalError:
                 lost_life = False
 
+            ### STATE 1 - Paused on level ready to start
+            ### TODO: the init_everything branch should probably be put in here.
+            ### Also there should be a game over state. Currently it's combined with this state
             if completed_level or lost_life:
                 # Generate next level
                 if completed_level:
@@ -172,15 +193,18 @@ def start_game():
 
                 # Update screen once before entering pause loop
                 pg.display.update()
-                remain_paused(key=exit_key, artist=artist, draw_screen=draw_screen)
+                remain_paused(key=exit_key, artist=artist, gameobj=gameobj, draw_screen=draw_screen)
 
+            ### STATE 2 - Playing game
             elif not lost_life and not completed_level:
                 player.draw_paddle()
                 for brick_obj in all_bricks:
                     if brick_obj.is_alive:
                         brick_obj.draw_brick_sprite()
 
-            ### MAIN GAME LOOP ###
+            # Get frame time for motion calculations
+            dt = gameobj.frame_dur()
+
             if revive_ball or restart:
                 ball_obj.x, ball_obj.y = BALL_INIT_POS[level]
                 ball_obj.velocity = BALL_INIT_VELOCITY[level]
@@ -221,7 +245,7 @@ def start_game():
             # Move balls
             for ball_obj in all_balls:
                 ball_obj.draw_ball(artist)
-                ball_obj.move()
+                ball_obj.move(dt)
                 dead, all_bricks = ball_obj.check_collision(player, all_bricks, all_powerups, max_brick_y)
                 if dead == "dead":
                     all_balls.pop(all_balls.index(ball_obj))

@@ -3,6 +3,8 @@ import math
 import time
 import numpy as np
 from consts import(
+    BALL_DEFAULT_VELOCITY,
+    BALL_FAST_VELOCITY_MAG,
     BRICK_DEFAULT_WIDTH,
     BRICK_DEFAULT_HEIGHT,
     ALL_POWERUP_TYPES,
@@ -78,13 +80,17 @@ class Powerup():
                 # powerups changing ball properties
                 # even though we're considering the ball here, still store powerups in the player object
                 elif self.power_type == "ball_speed":
+                    bfm = BALL_FAST_VELOCITY_MAG
+                    bdv = BALL_DEFAULT_VELOCITY[0] # Just get the Vx component as |Vx| = |Vy| for default V
+                    bfm_mag = 2 * bfm**2
+                    bdv_mag = 2 * bdv**2
                     # Ball velocity magnitude
                     for ball_obj in old_balls_list:
 
                         new_velocity = (
-                            math.sqrt(162/98)*ball_obj.velocity[0],
-                            math.sqrt(162/98)*ball_obj.velocity[1]
-                        ) if abs(ball_obj.v_mag()**2 - 98) < 1 else ball_obj.velocity
+                            math.sqrt(bfm_mag/bdv_mag)*ball_obj.velocity[0], # Compare magnitude of fast speed to slow speed to change vector
+                            math.sqrt(bfm_mag/bdv_mag)*ball_obj.velocity[1]
+                        ) if abs(ball_obj.v_mag()**2 - bdv_mag) < 1 else ball_obj.velocity
 
                         ball_obj.velocity = new_velocity
                         new_balls_list.append(ball_obj)
