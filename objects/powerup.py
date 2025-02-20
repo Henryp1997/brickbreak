@@ -13,6 +13,7 @@ from consts import(
     PLAYER_LONG,
     PLAYER_SHORT,
     PLAYER_FAST_SPEED,
+    POWERUP_SPEED
 )
 from objects.ball import Ball
 
@@ -32,18 +33,15 @@ class Powerup():
         self.artist = artist
         self.x, self.y = x, y
         self.width, self.height = BRICK_DEFAULT_WIDTH, BRICK_DEFAULT_HEIGHT
-        self.speed = 3
+        self.speed = POWERUP_SPEED
         self.is_alive = is_alive
         self.power_type = power_type
         img_name = ALL_POWERUP_TYPES[power_name][2]
         self.image = pg.image.load(f"{ASSETS_PATH}/powerup_sprites/{img_name}.png").convert_alpha()
 
 
-    def move(self, artist, all_powerups) -> None:
-        self.y += self.speed
-        if self.y > PLAYER_INIT_Y - 5:
-            self.is_alive = False # kill the powerup object
-            all_powerups.pop(all_powerups.index(self))
+    def move(self, artist, dt) -> None:
+        self.y += self.speed * dt
         artist.screen.blit(self.image, (self.x, self.y))
     
 
@@ -69,7 +67,7 @@ class Powerup():
                     new_balls_list = old_balls_list
 
                 elif self.power_type == "laser":
-                    player.time_got_laser = time.time() # Record the time the player got the laser powerup
+                    player.time_got_laser = time.perf_counter() # Record the time the player got the laser powerup
                     player.update_powerups("laser")
                     new_balls_list = old_balls_list
 

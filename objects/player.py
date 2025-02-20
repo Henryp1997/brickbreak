@@ -52,18 +52,18 @@ class Paddle():
         self.time_shot_laser = 0
     
 
-    def check_movement(self) -> None:
+    def move(self, dt) -> None:
         key = pg.key.get_pressed()
         # Move paddle left or right depending on key press
         # and whether paddle is in bounds or not
         if key[pg.K_LEFT]:
             if self.x + self.width/2 > 5:
-                self.x -= self.speed
-                self.rect.move_ip(-self.speed, 0)
+                self.x -= self.speed * dt
+                self.rect.move_ip(-self.speed*dt, 0)
         if key[pg.K_RIGHT]:
             if self.x + self.width/2 < SCREEN_X - 5:
-                self.x += self.speed
-                self.rect.move_ip(self.speed, 0)
+                self.x += self.speed * dt
+                self.rect.move_ip(self.speed*dt, 0)
 
 
     def check_laser_press(self, all_lasers) -> "Laser":
@@ -76,7 +76,7 @@ class Paddle():
             generate_bolt = True
         else:
             # Only generate another bolt if cooldown period has passed
-            if time.time() - self.time_shot_laser > 0.75:
+            if time.perf_counter() - self.time_shot_laser > 0.75:
                 generate_bolt = True
 
         # Generate bolt if all conditions are met
@@ -85,7 +85,7 @@ class Paddle():
             laser_x = self.x + (self.width - LASER_BOLT_INIT_WIDTH)/2
             laser_y = self.y - LASER_BOLT_INIT_HEIGHT
             laser_bolt = Laser(laser_x, laser_y, artist=self.artist)
-            self.time_shot_laser = time.time() # Update for cooldown time
+            self.time_shot_laser = time.perf_counter() # Update for cooldown time
             return laser_bolt
 
 

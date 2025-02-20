@@ -2,6 +2,7 @@ import pygame as pg
 from consts import(
     LASER_BOLT_INIT_WIDTH,
     LASER_BOLT_INIT_HEIGHT,
+    LASER_SPEED,
     COLOURS,
     BRICK_DEFAULT_WIDTH,
     BRICK_DEFAULT_HEIGHT
@@ -12,7 +13,7 @@ class Laser():
     def __init__(self, x, y, artist) -> None:
         self.x, self.y = x, y
         self.artist = artist
-        self.speed = -20
+        self.speed = LASER_SPEED
         self.width, self.height = LASER_BOLT_INIT_WIDTH, LASER_BOLT_INIT_HEIGHT
     
 
@@ -20,8 +21,8 @@ class Laser():
         pg.draw.rect(self.artist.screen, COLOURS["ELEC_BLUE"], (self.x, self.y, self.width, self.height))
 
 
-    def move(self) -> None:
-        self.y += self.speed
+    def move(self, dt) -> None:
+        self.y += self.speed * dt
     
 
     def check_collision(self, all_bricks, all_powerups, max_brick_y) -> None:

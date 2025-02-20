@@ -214,7 +214,7 @@ def start_game():
 
             if "laser" in player.powerups:
                 # Check if the laser powerup has timed out
-                if time.time() - player.time_got_laser > 10:
+                if time.perf_counter() - player.time_got_laser > 10:
                     player.powerups.pop(player.powerups.index("laser"))
                     artist.draw_info_bar(player.lives, player.powerups, player.width)
                     pg.display.update()
@@ -226,21 +226,27 @@ def start_game():
 
                 # Move laser bolts
                 for i, bolt in enumerate(all_lasers):
+                    bolt.move(dt)
                     bolt.draw_laser()
-                    bolt.move()
                     dead = bolt.check_collision(all_bricks, all_powerups, max_brick_y)
                     if dead == "dead":
                         all_lasers.pop(i)
                 
             # Check if moving paddle
-            player.check_movement()
+            player.move(dt)
 
             # Move powerups. Must do this before moving the balls because we check for width modifying powerups here too
             # If the paddle width changes AFTER checking collisions with the ball, the collisions will always be off
-            for power_up in all_powerups:
-                if power_up.is_alive:
-                    power_up.move(artist, all_powerups)
-                    player, all_balls = power_up.check_gained_powerup(player, all_balls, all_powerups)
+            for powerup in all_powerups:
+                if powerup.is_alive:
+                    powerup.move(artist, dt)
+
+                    # Kill the powerup object if hits bottom of screen
+                    if powerup.y > (PLAYER_INIT_Y - 5):
+                        powerup.is_alive = False
+                        all_powerups.pop(all_powerups.index(powerup))
+
+                    player, all_balls = powerup.check_gained_powerup(player, all_balls, all_powerups)
 
             # Move balls
             for ball_obj in all_balls:
