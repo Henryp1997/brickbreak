@@ -15,8 +15,10 @@ pg.display.set_caption("Brickbreaker")
 
 
 class Game():
-    def __init__(self) -> None:
+    def __init__(self, artist) -> None:
         self.frame_time = 0
+        self.artist = artist
+        self.game_state = "INIT"
 
 
     def frame_dur(self) -> float:
@@ -25,6 +27,73 @@ class Game():
         dt = current_time - self.frame_time
         self.frame_time = current_time
         return dt
+    
+
+    def state_init(self) -> None:
+        """ Initialisation game state """
+        all_lasers, all_bricks, all_powerups = [], [], []
+        level = -1
+        revive_ball = False
+        player, all_balls = self.__initialise_objects(self.artist, level)
+        draw_screen = True
+
+        # Set Attributes
+        self.artist.start_or_retry = "start"
+        self.game_state = "PLAYING"
+
+        return all_lasers, all_bricks, all_powerups, level, revive_ball, player, all_balls, draw_screen
+
+
+    def state_paused(self, key, draw_screen=None) -> None:
+        """ Paused state. Don't perform any actions until the user has pressed the appropriate exit key """
+        keys = {"ESCAPE": K_ESCAPE, "SPACE": K_SPACE}
+        if draw_screen:
+            self.artist.draw_start_text()
+            pg.display.update()
+
+        self.frame_dur() # Make sure we're still measuring frame time
+        for event in pg.event.get():
+            if event.type == KEYDOWN and event.key == keys[key]:
+                self.game_state = "PLAYING"
+                return
+            elif event.type == QUIT:
+                pg.quit()
+                sys.exit()
+
+    
+    def check_system_keys(self, all_bricks):
+        """ Check for special key combinations """
+        for event in pg.event.get():
+            if event.type == KEYDOWN and event.key == K_k and pg.key.get_mods() & KMOD_SHIFT:
+                all_bricks = [all_bricks[0]]
+            if event.type == KEYDOWN and event.key == K_ESCAPE:
+                self.game_state = "INIT"
+            if event.type == QUIT:
+                pg.quit()
+                sys.exit()
+
+        return all_bricks
+
+    ### PRIVATE METHODS
+    def __initialise_objects(self, artist, level) -> tuple:
+        """ Create the player and ball objects """
+        # Create objects
+        player = Paddle(
+            artist=artist,
+            x=PLAYER_INIT_X,
+            y=PLAYER_INIT_Y,
+            width=PLAYER_DEFAULT_WIDTH,
+            powerups=[],
+            lives=3
+        )
+        ball_obj = Ball(
+            x=BALL_INIT_POS[level][0],
+            y=BALL_INIT_POS[level][1],
+            velocity=BALL_INIT_VELOCITY[level],
+            passthrough=False
+        )
+
+        return player, [ball_obj]
 
 
 def generate_level(artist, level):
@@ -51,61 +120,7 @@ def generate_level(artist, level):
     return all_bricks, all_balls, max_brick_y
 
 
-def initialise_objects(artist, level):  
-    # Create objects
-    player = Paddle(
-        artist=artist,
-        x=PLAYER_INIT_X,
-        y=PLAYER_INIT_Y,
-        width=PLAYER_DEFAULT_WIDTH,
-        powerups=[],
-        lives=3
-    )
-    ball_obj = Ball(
-        x=BALL_INIT_POS[level][0],
-        y=BALL_INIT_POS[level][1],
-        velocity=BALL_INIT_VELOCITY[level],
-        passthrough=False
-    )
-
-    return player, ball_obj
-
-
-def check_system_keys(restart, init_everything, all_bricks):
-    for event in pg.event.get():
-        if event.type == KEYDOWN and event.key == K_k and pg.key.get_mods() & KMOD_SHIFT:
-            all_bricks = [all_bricks[0]]
-        if event.type == KEYDOWN and event.key == K_ESCAPE:
-            restart = True
-            init_everything = True
-        if event.type == QUIT:
-            pg.quit()
-            sys.exit()
-
-    return restart, init_everything, all_bricks
-
-
-def remain_paused(key, artist, gameobj, draw_screen=None) -> None:
-    keys = {"ESCAPE": K_ESCAPE, "SPACE": K_SPACE}
-    if draw_screen:
-        artist.draw_start_text()
-        pg.display.update()
-    while True:
-        gameobj.frame_dur() # Make sure we're still measuring frame time
-        for event in pg.event.get():
-            if event.type == KEYDOWN and event.key == keys[key]:
-                return
-            elif event.type == QUIT:
-                pg.quit()
-                sys.exit()
-
-
 def start_game():
-    init_everything = True
-
-    # Create game object for keeping track of global properties like game state and time
-    gameobj = Game()
-
     # Create object for drawing things to the screen
     artist = Artist(
         SCREEN_X=SCREEN_X,
@@ -113,128 +128,89 @@ def start_game():
         start_or_retry="start"
     )
 
+    # Create game object for keeping track of global properties like game state and time
+    game = Game(artist)
+
     # Main game loop
     while True:
-        gameobj.frame_time = time.perf_counter() # Keep track of frame time for speed calculations
+        game.frame_time = time.perf_counter() # Keep track of frame time for speed calculations
         clock = pg.time.Clock()
         clock.tick(60)
         
         # Reset screen contents
         artist.fill_screen(colour=COLOURS["BLACK"])
 
-        if init_everything:
-            all_lasers, all_bricks, all_powerups = [], [], []
-            level, levels_cleared = 0, 0
-            revive_ball, restart, init_everything = False, False, False
-            player, ball_obj = initialise_objects(artist, level)
-            artist.start_or_retry = "start"
-            draw_screen = True
+        if game.game_state == "INIT":
+            all_lasers, all_bricks, all_powerups, level, revive_ball, player, all_balls, draw_screen = game.state_init()
             pg.display.update()
        
-        elif not init_everything:
+        elif game.game_state == "PAUSED":
             artist.draw_border(colour=COLOURS['GREY2'])
+            # Delete all currently moving powerups
+            all_powerups = []
 
+            # Reset player position to center, reset player speed and size and
+            # remove powerups if lost a life OR beat level
+            player.reset_attributes()
+            player.draw_paddle()
+
+            artist.draw_info_bar(player.lives, player.powerups, player.width)
+            
+            # Draw brick objects that are still active before entering paused loop
+            for brick_obj in all_bricks:
+                if brick_obj.is_alive:
+                    brick_obj.draw_brick_sprite()
+            
+            # Draw a dummy ball on the screen. Level defines position of dummy ball
+            artist.draw_dummy_ball(level)
+    
+            exit_key = "SPACE"
+
+            # Cancel out all the drawing to the screen we just did if game over
+            if player.lives == 0:
+                play_sound("game_over")
+                revive_ball = False
+                artist.start_or_retry = "start"
+
+                # Update screen before entering loop
+                artist.draw_game_over_screen()
+                game.game_state = "INIT" # Simulate a full restart
+                exit_key = "ESCAPE"
+                draw_screen = False
+
+            # pg.display.update()
+            # game.paused_logic_done = True
+
+            game.state_paused(key=exit_key, draw_screen=draw_screen)
+
+        ### STATE 2 - Playing game
+        elif game.game_state == "PLAYING":
+            # Check if completed level or lost life. Enter paused state if so
             completed_level = len(all_bricks) == 0
-            try:
-                lost_life = len(all_balls) == 0
-            except UnboundLocalError:
-                lost_life = False
+            lost_life = len(all_balls) == 0
 
-            ### STATE 1 - Paused on level ready to start
-            ### TODO: the init_everything branch should probably be put in here.
-            ### Also there should be a game over state. Currently it's combined with this state
-            if completed_level or lost_life:
-                # Generate next level
-                if completed_level:
-                    if levels_cleared > 0:
-                        level += 1
-                    levels_cleared += 1
-                    all_bricks, all_balls, max_brick_y = generate_level(artist, level) 
-                
-                # Play sound and subtract from lives count
-                if lost_life:
-                    artist.start_or_retry = "retry"
-                    player.lives -= 1
-                    if player.lives > 0:
-                        play_sound("lose_life")
-                        revive_ball = True
-
-                # Delete all currently moving powerups
-                all_powerups = []
-
-                # Reset player position to center, reset player speed and size and
-                # remove powerups if lost a life OR beat level
-                player.reset_attributes()
-                player.draw_paddle()
-
-                artist.draw_info_bar(player.lives, player.powerups, player.width)
-                
-                # Draw brick objects that are still active before entering paused loop
-                for brick_obj in all_bricks:
-                    if brick_obj.is_alive:
-                        brick_obj.draw_brick_sprite()
-                
-                # Draw a dummy ball on the screen. Level defines position of dummy ball
-                artist.draw_dummy_ball(level)
-        
-                exit_key = "SPACE"
-
-                # Cancel out all the drawing to the screen we just did if game over
-                if player.lives == 0:
-                    play_sound("game_over")
-                    revive_ball = False
-                    artist.start_or_retry = "start"
-
-                    # Update screen before entering loop
-                    artist.draw_game_over_screen()
-                    restart, init_everything = True, True # Simulate a full restart
-                    exit_key = "ESCAPE"
-                    draw_screen = False
-
-                # Update screen once before entering pause loop
-                pg.display.update()
-                remain_paused(key=exit_key, artist=artist, gameobj=gameobj, draw_screen=draw_screen)
-
-            ### STATE 2 - Playing game
-            elif not lost_life and not completed_level:
-                player.draw_paddle()
-                for brick_obj in all_bricks:
-                    if brick_obj.is_alive:
-                        brick_obj.draw_brick_sprite()
+            # Generate next level
+            if completed_level:
+                # Note this will also be entered on every reset
+                level += 1
+                all_bricks, all_balls, max_brick_y = generate_level(artist, level)
+                game.game_state = "PAUSED"
+            
+            # Play sound and subtract from lives count
+            if lost_life:
+                artist.start_or_retry = "retry"
+                player.lives -= 1
+                if player.lives > 0:
+                    play_sound("lose_life")
+                    revive_ball = True
+                game.game_state = "PAUSED"
 
             # Get frame time for motion calculations
-            dt = gameobj.frame_dur()
+            dt = game.frame_dur()
 
-            if revive_ball or restart:
-                ball_obj.x, ball_obj.y = BALL_INIT_POS[level]
-                ball_obj.velocity = BALL_INIT_VELOCITY[level]
-                ball_obj.passthrough = False
-                all_balls.append(ball_obj)
-                revive_ball, restart = False, False
-
-            if "laser" in player.powerups:
-                # Check if the laser powerup has timed out
-                if time.perf_counter() - player.time_got_laser > 10:
-                    player.powerups.pop(player.powerups.index("laser"))
-                    artist.draw_info_bar(player.lives, player.powerups, player.width)
-                    pg.display.update()
-
-                # Move paddle and check for spacebar presses for laser bolts
-                laser_bolt = player.check_laser_press(all_lasers)
-                if laser_bolt is not None:
-                    all_lasers.append(laser_bolt)
-
-                # Move laser bolts
-                for i, bolt in enumerate(all_lasers):
-                    bolt.move(dt)
-                    bolt.draw_laser()
-                    dead = bolt.check_collision(all_bricks, all_powerups, max_brick_y)
-                    if dead == "dead":
-                        all_lasers.pop(i)
-                
-            # Check if moving paddle
+            ### OBJECT MOVEMENT
             player.move(dt)
-
+            
             # Move powerups. Must do this before moving the balls because we check for width modifying powerups here too
             # If the paddle width changes AFTER checking collisions with the ball, the collisions will always be off
             for powerup in all_powerups:
@@ -256,16 +232,60 @@ def start_game():
                 if dead == "dead":
                     all_balls.pop(all_balls.index(ball_obj))
 
-            # Remove multi powerup if only one ball left              
-            if len(all_balls) == 1 and "multi" in player.powerups:
-                player.powerups.pop(player.powerups.index("multi"))
-                artist.draw_info_bar(player.lives, player.powerups, player.width)
+            if revive_ball:
+                ball_obj.x, ball_obj.y = BALL_INIT_POS[level]
+                ball_obj.velocity = BALL_INIT_VELOCITY[level]
+                ball_obj.passthrough = False
+                all_balls.append(ball_obj)
+                revive_ball = False
 
-            # Only update playable area. Info bar will be updated in relevant sections if required
-            pg.display.update((0, 0, artist.SCREEN_X, INFO_BAR_START))
+            remove_laser_powerup = False
+            if player.has_laser():
+                # Check if the laser powerup has timed out
+                if time.perf_counter() - player.time_got_laser > 10:
+                    remove_laser_powerup = True
+
+                # Move paddle and check for spacebar presses for laser bolts
+                laser_bolt = player.check_laser_press(all_lasers)
+                if laser_bolt is not None:
+                    all_lasers.append(laser_bolt)
+
+                # Move laser bolts
+                for i, bolt in enumerate(all_lasers):
+                    bolt.move(dt)
+                    dead = bolt.check_collision(all_bricks, all_powerups, max_brick_y)
+                    if dead == "dead":
+                        all_lasers.pop(i)
+
+            ### DRAWING
+            artist.draw_border(colour=COLOURS['GREY2'])
+            player.draw_paddle()
+            for brick_obj in all_bricks:
+                if brick_obj.is_alive:
+                    brick_obj.draw_brick_sprite()
+            
+            if player.has_laser():
+                for i, bolt in enumerate(all_lasers):
+                    bolt.draw_laser()
+                
+            # Remove multi powerup if only one ball left
+            remove_multi_powerup = len(all_balls) == 1 and "multi" in player.powerups
+            update_bar = remove_multi_powerup or remove_laser_powerup     
+            if update_bar:
+                if remove_multi_powerup:
+                    player.remove_powerup("multi")
+                if remove_laser_powerup:
+                    player.remove_powerup("laser")
+
+                artist.draw_info_bar(player.lives, player.powerups, player.width)
+                pg.display.update()
+
+            else:
+                # Only update playable area. Info bar will be updated in relevant sections if required
+                pg.display.update((0, 0, artist.SCREEN_X, INFO_BAR_START))
 
             # Check for special key combinations
-            restart, init_everything, all_bricks = check_system_keys(restart, init_everything, all_bricks)
+            all_bricks = game.check_system_keys(all_bricks)
 
 if __name__ == "__main__":
     start_game()

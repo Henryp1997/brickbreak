@@ -121,3 +121,11 @@ class Paddle():
         self.x = self.x - (min_plus_1 * width_delta/2)
         self.width = self.width + (min_plus_1 * width_delta)
         self.change_sprite()
+
+
+    def has_laser(self) -> bool:
+        return "laser" in self.powerups
+
+
+    def remove_powerup(self, powerup) -> None:
+        self.powerups.pop(self.powerups.index(powerup))

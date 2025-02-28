@@ -54,6 +54,6 @@ class Brick():
             seed = random.randint(0, NUM_POWERUPS - 1)
             power_type = list(ALL_POWERUP_TYPES.values())[seed][0]
             power_name = list(ALL_POWERUP_TYPES.keys())[seed]
-            power_type, power_name = "laser", "Laser" # for debug
+            # power_type, power_name = "laser", "Laser" # for debug
             power_up = Powerup(self.artist, self.x, self.y, True, power_name, power_type)
             all_powerups.append(power_up)
