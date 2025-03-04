@@ -267,7 +267,8 @@ def start_game():
                 
             # Remove multi powerup if only one ball left
             remove_multi_powerup = len(all_balls) == 1 and "multi" in player.powerups
-            update_bar = remove_multi_powerup or remove_laser_powerup     
+            powerups_changed = player.powerup_gained
+            update_bar = remove_multi_powerup or remove_laser_powerup or powerups_changed
             if update_bar:
                 if remove_multi_powerup:
                     player.remove_powerup("multi")
@@ -275,6 +276,7 @@ def start_game():
                     player.remove_powerup("laser")
 
                 artist.draw_info_bar(player.lives, player.powerups, player.width)
+                player.powerup_gained = False # Must always set back to False as this flag should only last one frame
                 pg.display.update()
 
             else:
