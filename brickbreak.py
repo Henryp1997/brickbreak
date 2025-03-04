@@ -212,7 +212,7 @@ def start_game():
             # If the paddle width changes AFTER checking collisions with the ball, the collisions will always be off
             for powerup in all_powerups:
                 if powerup.is_alive:
-                    powerup.move(artist, dt)
+                    powerup.move(dt)
 
                     # Kill the powerup object if hits bottom of screen
                     if powerup.y > (PLAYER_INIT_Y - 5):
@@ -265,6 +265,9 @@ def start_game():
                 for i, bolt in enumerate(all_lasers):
                     bolt.draw_laser()
                 
+            for powerup in all_powerups:
+                powerup.draw()
+
             # Remove multi powerup if only one ball left
             remove_multi_powerup = len(all_balls) == 1 and "multi" in player.powerups
             powerups_changed = player.powerup_gained

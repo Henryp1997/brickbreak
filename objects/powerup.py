@@ -40,9 +40,12 @@ class Powerup():
         self.image = pg.image.load(f"{ASSETS_PATH}/powerup_sprites/{img_name}.png").convert_alpha()
 
 
-    def move(self, artist, dt) -> None:
+    def move(self, dt) -> None:
         self.y += self.speed * dt
-        artist.screen.blit(self.image, (self.x, self.y))
+        
+    
+    def draw(self) -> None:
+        self.artist.screen.blit(self.image, (self.x, self.y))
     
 
     def check_gained_powerup(self, player, old_balls_list, all_powerups) -> tuple:
