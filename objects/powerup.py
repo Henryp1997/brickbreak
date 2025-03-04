@@ -127,9 +127,8 @@ class Powerup():
                 self.is_alive = False # kill the powerup object
                 all_powerups.pop(all_powerups.index(self))
 
-                # Update info bar with newly obtained powerup
-                self.artist.draw_info_bar(player.lives, player.powerups, player.width)
-                pg.display.update()
+                # Flag to allow info bar to update
+                player.powerup_gained = True
 
             else: # player didn't grab powerup
                 for ball_obj in old_balls_list:

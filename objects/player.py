@@ -25,7 +25,8 @@ class Paddle():
         "lives",
         "speed", 
         "height",
-        "powerups", 
+        "powerups",
+        "powerup_gained",
         "rect", 
         "sprite_dict", 
         "image", 
@@ -41,6 +42,7 @@ class Paddle():
         self.speed = PLAYER_DEFAULT_SPEED
         self.height = 15
         self.powerups = powerups
+        self.powerup_gained = False
         self.rect = pg.Rect((self.x, self.y), (self.width, self.height))
         self.sprite_dict = {
             150: "paddle",
