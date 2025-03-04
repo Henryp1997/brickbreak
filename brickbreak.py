@@ -47,14 +47,14 @@ class Game():
     def state_paused(self, key, draw_screen=None) -> None:
         """ Paused state. Don't perform any actions until the user has pressed the appropriate exit key """
         keys = {"ESCAPE": K_ESCAPE, "SPACE": K_SPACE}
+        output_states = {"ESCAPE": "INIT", "SPACE": "PLAYING"}
         if draw_screen:
             self.artist.draw_start_text()
-            pg.display.update()
 
         self.frame_dur() # Make sure we're still measuring frame time
         for event in pg.event.get():
             if event.type == KEYDOWN and event.key == keys[key]:
-                self.game_state = "PLAYING"
+                self.game_state = output_states[key]
                 return
             elif event.type == QUIT:
                 pg.quit()
@@ -174,14 +174,11 @@ def start_game():
 
                 # Update screen before entering loop
                 artist.draw_game_over_screen()
-                game.game_state = "INIT" # Simulate a full restart
                 exit_key = "ESCAPE"
                 draw_screen = False
 
-            # pg.display.update()
-            # game.paused_logic_done = True
-
             game.state_paused(key=exit_key, draw_screen=draw_screen)
+            pg.display.update()
 
         ### STATE 2 - Playing game
         elif game.game_state == "PLAYING":
