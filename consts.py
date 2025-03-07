@@ -70,7 +70,7 @@ BALL_FAST_VELOCITY_MAG = 500
 BALL_INIT_VELOCITY = {
    -1:  BALL_DEFAULT_VELOCITY,
     0:  BALL_DEFAULT_VELOCITY,
-    1:  (-get_x_component(8), 8),
+    1:  (-get_x_component(450), 450),
     2:  BALL_DEFAULT_VELOCITY,
     3:  BALL_DEFAULT_VELOCITY,
 }
